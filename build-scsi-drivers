@@ -1,0 +1,496 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0
+#
+# Build all Linux kernel SCSI drivers. This is nontrivial because multiple SCSI
+# drivers are only available for a specific architecture.
+
+cc_prefix_debian() {
+    case "$1" in
+	x86);;
+	arm)
+	    echo arm-linux-gnueabi-;;
+	m68k)
+	    echo m68k-linux-gnu-;;
+	mips)
+	    echo mips-linux-gnu-;;
+	parisc)
+	    echo hppa-linux-gnu-;;
+	powerpc)
+	    echo powerpc-linux-gnu-;;
+	s390)
+	    echo s390x-linux-gnu-;;
+    esac
+}
+
+cc_prefix_suse() {
+    case "$1" in
+	x86);;
+	arm)
+	    echo arm-suse-linux-gnueabi-;;
+	m68k)
+	    echo m68k-suse-linux-;;
+	mips)
+	    echo mips-suse-linux-;;
+	powerpc)
+	    echo powerpc64-suse-linux-;;
+	s390)
+	    echo s390x-suse-linux-;;
+    esac
+}
+
+cc_prefix() {
+    if type -p dpkg-query >&/dev/null; then
+	cc_prefix_debian "$1"
+    else
+	cc_prefix_suse "$1"
+    fi
+}
+
+enable() {
+    if grep -qw "$1" .config; then
+	sed -i "s/^\(\|# \)$1\( \|=\).*/$1=$2/" .config
+    else
+	echo "$1=$2" >>.config
+    fi
+}
+
+disable() {
+    if grep -qw "$1" .config; then
+	sed -i "s/^\(\|# \)$1\( \|=\).*/# $1 is not set/" .config
+    else
+	echo "# $1 is not set" >> .config
+    fi
+}
+
+set_options() {
+    for o in "$@"; do
+	if [ "${o%=[my]}" != "$o" ]; then
+	    enable "${o%=[my]}" "${o: -1}"
+	else
+	    disable "${o%=n}"
+	fi
+    done
+}
+
+test_options() {
+    local c
+
+    for o in "$@"; do
+	c="${o%=[myn]}"
+	if [ "${o%=[my]}" != "$o" ]; then
+	    if ! grep -q "^$c=[my]" .config; then
+		grep "${c}[= ]" .config || true
+		echo "$c has not been set"
+		exit 1
+	    fi
+	else
+	    if ! grep -q "^# $c is not set" .config &&
+		    grep -qw "$c" .config; then
+		grep -w "$c" .config
+		echo "$c has not been disabled"
+		exit 1
+	    fi
+	fi
+    done
+}
+
+rebuild_scsi_drivers() {
+    local arch="$1"
+
+    case "$arch" in
+	arm|m68k|mips|parisc)
+	    ;;
+	*)
+	    options+=(
+		CONFIG_DMADEVICES=y
+		CONFIG_PCI=y
+		CONFIG_SCSI_VIRTIO=y
+		CONFIG_SMP=y
+		CONFIG_VIRTIO=y
+		CONFIG_VIRTIO_PCI=y
+	    )
+	    # PCI drivers.
+	    options+=(
+		CONFIG_ATA_PIIX=y
+		CONFIG_BE2ISCSI=y
+		CONFIG_BLK_DEV_3W_XXXX_RAID=y
+		CONFIG_FCOE=y
+		CONFIG_FUSION=y
+		CONFIG_FUSION_FC=y
+		CONFIG_FUSION_SAS=y
+		CONFIG_FUSION_SPI=y
+		CONFIG_MEGARAID_LEGACY=y
+		CONFIG_MEGARAID_NEWGEN=y
+		CONFIG_MEGARAID_SAS=y
+		CONFIG_MEGARAID_MAILBOX=y
+		CONFIG_MEGARAID_MM=y
+		CONFIG_QED=y
+		CONFIG_QEDF=y
+		CONFIG_QEDI=y
+		CONFIG_RTS5208=y
+		CONFIG_SATA_AHCI=y
+		CONFIG_SATA_DWC=y
+		CONFIG_SATA_INIC162X=y
+		CONFIG_SATA_MV=y
+		CONFIG_SATA_NV=y
+		CONFIG_SATA_SIL24=y
+		CONFIG_SCSI_3W_9XXX=y
+		CONFIG_SCSI_3W_SAS=y
+		CONFIG_SCSI_AACRAID=y
+		CONFIG_SCSI_ACARD=y
+		CONFIG_SCSI_ADVANSYS=y
+		CONFIG_SCSI_AIC79XX=y
+		CONFIG_SCSI_AIC7XXX=y
+		CONFIG_SCSI_AIC94XX=y
+		CONFIG_SCSI_AM53C974=y
+		CONFIG_SCSI_ARCMSR=y
+		CONFIG_SCSI_BFA_FC=y
+		CONFIG_SCSI_BNX2X_FCOE=y
+		CONFIG_SCSI_BNX2_ISCSI=y
+		CONFIG_SCSI_CHELSIO_FCOE=y
+		CONFIG_SCSI_CXGB3_ISCSI=y
+		CONFIG_SCSI_CXGB4_ISCSI=y
+		CONFIG_SCSI_DC395x=y
+		CONFIG_SCSI_DMX3191D=y
+		CONFIG_SCSI_ESAS2R=y
+		CONFIG_SCSI_FDOMAIN_PCI=y
+		CONFIG_SCSI_HPSA=y
+		CONFIG_SCSI_HPTIOP=y
+		CONFIG_SCSI_INIA100=y
+		CONFIG_SCSI_INITIO=y
+		CONFIG_SCSI_IPR=y
+		CONFIG_SCSI_IPS=y
+		CONFIG_SCSI_MPI3MR=y
+		CONFIG_SCSI_MPT2SAS=y
+		CONFIG_SCSI_MPT3SAS=y
+		CONFIG_SCSI_MVSAS=y
+		CONFIG_SCSI_MVUMI=y
+		CONFIG_SCSI_MYRB=y
+		CONFIG_SCSI_MYRS=y
+		CONFIG_SCSI_PM8001=y
+		CONFIG_SCSI_PM8001=y
+		CONFIG_SCSI_PMCRAID=y
+		CONFIG_SCSI_PMCRAID=y
+		CONFIG_SCSI_QLA_FC=y
+		CONFIG_SCSI_QLA_ISCSI=y
+		CONFIG_SCSI_QLOGIC_1280=y
+		CONFIG_SCSI_SMARTPQI=y
+		CONFIG_SCSI_SNIC=y
+		CONFIG_SCSI_SNIC_DEBUG_FS=y
+		CONFIG_SCSI_STEX=y
+		CONFIG_SCSI_SYM53C8XX_2=y
+		CONFIG_SCSI_UFSHCD=y
+		CONFIG_SCSI_UFSHCD_PCI=y
+		CONFIG_SCSI_WD719X=y
+	    )
+	    # InfiniBand driver
+	    options+=(
+		CONFIG_INFINIBAND=y
+		CONFIG_INFINIBAND_ADDR_TRANS=y
+		CONFIG_INFINIBAND_ISER=y
+		CONFIG_INFINIBAND_SRP=y
+	    )
+	    ;;
+    esac
+
+    options+=(
+	CONFIG_ATA=y
+	CONFIG_BLK_DEV_BSG=y
+	CONFIG_BLK_DEV_SD=y
+	CONFIG_BLK_DEV_SR=y
+	CONFIG_BLOCK=y
+	CONFIG_CHR_DEV_SCH=y
+	CONFIG_CHR_DEV_SG=y
+	CONFIG_CHR_DEV_ST=y
+	CONFIG_COMPILE_TEST=y
+	CONFIG_DEBUG_FS=y
+	CONFIG_ENCLOSURE_SERVICES=y
+	CONFIG_FIREWIRE=y
+	CONFIG_FIREWIRE_SBP2=y
+	CONFIG_INET=y
+	CONFIG_IPV6=y
+	CONFIG_ISCSI_TCP=y
+	CONFIG_LIBFC=y
+	CONFIG_LIBFCOE=y
+	CONFIG_LOOPBACK_TARGET=y
+	CONFIG_MODULES=y
+	CONFIG_NET=y
+	CONFIG_PARPORT=y
+	CONFIG_PCCARD=y
+	CONFIG_PCMCIA=y
+	CONFIG_PCMCIA_AHA152X=y
+	CONFIG_PCMCIA_FDOMAIN=y
+	CONFIG_PCMCIA_NINJA_SCSI=y
+	CONFIG_PCMCIA_QLOGIC=y
+	CONFIG_PCMCIA_SYM53C500=y
+	CONFIG_RAID_ATTRS=y
+	CONFIG_SCSI=y
+	CONFIG_SCSI_CONSTANTS=y
+	CONFIG_SCSI_DEBUG=y
+	CONFIG_SCSI_DH=y
+	CONFIG_SCSI_DH_ALUA=y
+	CONFIG_SCSI_ENCLOSURE=y
+	CONFIG_SCSI_FC_ATTRS=y
+	CONFIG_SCSI_ISCSI_ATTRS=y
+	CONFIG_SCSI_LOGGING=y
+	CONFIG_SCSI_LOWLEVEL_PCMCIA=y
+	CONFIG_SCSI_SAS_ATTRS=y
+	CONFIG_SCSI_SAS_ATTRS=y
+	CONFIG_SCSI_SAS_LIBSAS=y
+	CONFIG_SCSI_SPI_ATTRS=y
+	CONFIG_SCSI_SRP_ATTRS=y
+	CONFIG_SCSI_SRP_ATTRS=y
+	CONFIG_STAGING=y
+	CONFIG_TARGET_CORE=y
+	CONFIG_USB=y
+	CONFIG_USB_MICROTEK=y
+	CONFIG_USB_STORAGE=y
+	CONFIG_USB_SUPPORT=y
+	CONFIG_USB_UAS=y
+	CONFIG_VIRTIO_MENU=y
+	CONFIG_WERROR=n
+    )
+    # Avoid CPU_32v3 since gcc-10 does not support it.
+    if [ "$arch" = "arm" ]; then
+	sed -i 's/select CPU_32v3/select CPU_32v4/' arch/arm/mm/Kconfig
+    fi
+    set_options "${options[@]}"
+    cat .config >oldconfig-output.txt
+    make ARCH="$arch" CROSS_COMPILE="$(cc_prefix "$arch")" oldconfig \
+	 </dev/null >>oldconfig-output.txt 2>&1 ||
+	cat oldconfig-output.txt
+    test_options "${options[@]}"
+    make ARCH="$arch" CROSS_COMPILE="$(cc_prefix "$arch")" -j"$(nproc)" \
+	 </dev/null
+    git checkout HEAD arch/arm/mm/Kconfig
+}
+
+# Arguments: $1: architecture; $2: cross-compilation prefix.
+build_one_arch() {
+    echo "*** Architecture: $1 ***"
+    [ -e .config ] || touch .config
+    options=()
+    case "$1" in
+	x86-32)
+	    options+=(
+		CONFIG_64BIT=n
+		CONFIG_ACPI=y
+		CONFIG_EISA=y
+		CONFIG_FCOE_FNIC=y
+		CONFIG_HYPERV=y
+		CONFIG_HYPERVISOR_GUEST=y
+		CONFIG_ISA=y
+		CONFIG_ISA_DMA_API=y
+		CONFIG_NOHIGHMEM=y
+		CONFIG_PARAVIRT=y
+		CONFIG_SCSI_ISCI=y
+		CONFIG_SCSI_LPFC=y
+		CONFIG_VMWARE_PVSCSI=y
+		CONFIG_X86_EXTENDED_PLATFORM=y
+		CONFIG_X86_GENERIC=y
+		CONFIG_X86_PAE=y
+		CONFIG_XEN=y
+	    )
+	    # ISA drivers
+	    options+=(
+		CONFIG_SCSI_FDOMAIN_ISA=y
+		CONFIG_SCSI_AHA152X=y
+		CONFIG_SCSI_AHA1542=y
+		CONFIG_SCSI_GENERIC_NCR5380=y
+		CONFIG_SCSI_QLOGIC_FAS=y
+	    )
+	    # EISA drivers
+	    options+=(
+		CONFIG_SCSI_AHA1740=y
+		CONFIG_SCSI_SIM710=y
+	    )
+	    # Xen drivers
+	    options+=(
+		CONFIG_XEN_SCSI_FRONTEND=y
+	    )
+	    # Hyper-V drivers
+	    options+=(
+		CONFIG_HYPERV_STORAGE=y
+	    )
+	    # Parallel port drivers
+	    options+=(
+		CONFIG_PARPORT_PC=y
+		CONFIG_SCSI_IMM=y
+		CONFIG_SCSI_IZIP_EPP16=y
+		CONFIG_SCSI_PPA=y
+	    )
+	    # 32-bit drivers
+	    options+=(
+		CONFIG_SCSI_BUSLOGIC=y
+		CONFIG_SCSI_DPT_I2O=y
+		CONFIG_SCSI_FLASHPOINT=y
+		CONFIG_SCSI_NSP32=y
+	    )
+	    ;;
+	x86-64)
+	    options+=(
+		CONFIG_64BIT=y
+		CONFIG_SCSI_HISI_SAS=y
+		CONFIG_SCSI_HISI_SAS_PCI=y
+		CONFIG_UNISYSSPAR=y
+		CONFIG_UNISYS_VISORBUS=y
+		CONFIG_UNISYS_VISORHBA=y
+	    )
+	    ;;
+	arm)
+	    options+=(
+		CONFIG_ARCH_RPC=y
+		CONFIG_FPE_NWFPE=y
+		CONFIG_FPE_NWFPE_XP=n
+		CONFIG_FPE_FASTFPE=n
+		CONFIG_SCSI_ACORNSCSI_3=y
+		CONFIG_SCSI_ACORNSCSI_SYNC=y
+		CONFIG_SCSI_ARXESCSI=y
+		CONFIG_SCSI_CUMANA_1=y
+		CONFIG_SCSI_CUMANA_2=y
+		CONFIG_SCSI_EESOXSCSI=y
+		CONFIG_SCSI_OAK1=y
+		CONFIG_SCSI_POWERTECSCSI=y
+	    )
+	    ;;
+	m68k)
+	    options+=(
+		CONFIG_M68KCLASSIC=y
+		CONFIG_MMU=y
+		CONFIG_VME=y
+		CONFIG_MVME147=y
+		CONFIG_MVME16x=y
+		CONFIG_A2091_SCSI=y
+		CONFIG_A3000_SCSI=y
+		CONFIG_AMIGA=y
+		CONFIG_ATARI=y
+		CONFIG_ATARI_SCSI=y
+		CONFIG_BVME6000=y
+		CONFIG_BVME6000_SCSI=y
+		CONFIG_GVP11_SCSI=y
+		CONFIG_M68060=y
+		CONFIG_MAC=y
+		CONFIG_MAC_SCSI=y
+		CONFIG_MMU=y
+		CONFIG_MVME147_SCSI=y
+		CONFIG_MVME16x_SCSI=y
+		CONFIG_Q40=y
+		CONFIG_SCSI_A4000T=y
+		CONFIG_SCSI_MAC_ESP=y
+		CONFIG_SCSI_ZORRO7XX=y
+		CONFIG_SCSI_ZORRO_ESP=y
+		CONFIG_ZORRO=y
+	    )
+	    ;;
+	m68k-sun3)
+	    options+=(
+		CONFIG_M68KCLASSIC=y
+		CONFIG_MMU=y
+		CONFIG_MMU_SUN3=y
+		CONFIG_MMU_MOTOROLA=n
+		CONFIG_MMU_COLDFIRE=n
+		CONFIG_M68060=n
+		CONFIG_Q40=n
+		CONFIG_AMIGA=n
+		CONFIG_ATARI=n
+		CONFIG_MAC=n
+		CONFIG_SUN3X=n
+		CONFIG_VME=n
+		CONFIG_SUN3=y
+		CONFIG_SUN3_SCSI=y
+	    )
+	    ;;
+	m68k-sun3x)
+	    options+=(
+		CONFIG_M68KCLASSIC=y
+		CONFIG_SUN3X=y
+		CONFIG_SUN3X_ESP=y
+		CONFIG_Q40=y
+	    )
+	    ;;
+	mips-jazz)
+	    options+=(
+		CONFIG_JAZZ_ESP=y
+		CONFIG_MACH_JAZZ=y
+		CONFIG_MIPS=y
+		CONFIG_SGI_IP28=n
+		CONFIG_SNI_RM=n
+	    )
+	    ;;
+	mips-sgi)
+	    options+=(
+		CONFIG_SGIWD93_SCSI=y
+		CONFIG_SGI_IP28=y
+		CONFIG_SNI_RM=n
+	    )
+	    ;;
+	mips-sni)
+	    options+=(
+		CONFIG_SCSI_SNI_53C710=y
+		CONFIG_SGI_IP28=n
+		CONFIG_SNI_RM=y
+	    )
+	    ;;
+	parisc)
+	    options+=(
+		CONFIG_SCSI_LASI700=y
+		CONFIG_SCSI_ZALON=y
+	    )
+	    ;;
+	powerpc-32)
+	    options+=(
+		CONFIG_PPC32=y
+		CONFIG_PPC_PMAC=y
+		CONFIG_PATA_MACIO=y
+		CONFIG_SCSI_MESH=y
+		CONFIG_SCSI_MAC53C94=y
+	    )
+	    ;;
+	powerpc-64)
+	    options+=(
+		CONFIG_PPC64=y
+		CONFIG_PPC_BOOK3S=y
+		CONFIG_PPC_PSERIES=y
+		CONFIG_SCSI_IBMVSCSI=y
+		CONFIG_SCSI_IBMVFC=y
+		CONFIG_CXLFLASH=y
+	    )
+	    ;;
+	powerpc-ps3)
+	    options+=(
+		CONFIG_PPC64=y
+		CONFIG_PPC_PS3=y
+		CONFIG_PS3_ROM=y
+	    )
+	    ;;
+	sparc)
+	    options+=(
+		CONFIG_SBUS=y
+		CONFIG_SCSI_QLOGICPTI=y
+		CONFIG_SCSI_SUNESP=y
+	    )
+	    ;;
+	s390)
+	    options+=(
+		CONFIG_ZFCP=y
+	    )
+	    ;;
+	*)
+	    echo "Unknown architecture $1"
+	    return 1
+	    ;;
+    esac
+    rebuild_scsi_drivers "${1%-*}"
+}
+
+set -e
+
+if [ -n "$1" ]; then
+    build_one_arch "$1"
+else
+    for arch in x86-32 x86-64 arm m68k m68k-sun3 m68k-sun3x \
+		       mips-jazz mips-sgi mips-sni \
+		       parisc powerpc-32 powerpc-64 powerpc-ps3 s390; do
+	build_one_arch "$arch"
+    done
+fi
