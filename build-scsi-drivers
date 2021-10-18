@@ -31,6 +31,8 @@ cc_prefix_suse() {
 	    echo m68k-suse-linux-;;
 	mips)
 	    echo mips-suse-linux-;;
+	parisc)
+	    echo hppa-suse-linux-;;
 	powerpc)
 	    echo powerpc64-suse-linux-;;
 	s390)
