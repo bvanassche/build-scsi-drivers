@@ -509,7 +509,9 @@ build_one_arch() {
 set -e
 
 if [ -n "$1" ]; then
-    build_one_arch "$1"
+    for arch in "$@"; do
+	build_one_arch "${arch}"
+    done
 else
     for arch in x86-32 x86-64 arm m68k m68k-sun3 m68k-sun3x \
 		       mips-jazz mips-sgi mips-sni \
