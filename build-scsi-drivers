@@ -48,6 +48,17 @@ cc_prefix() {
     fi
 }
 
+compiler_name() {
+    case "$1" in
+	arm)
+	    # Use gcc-9 for ARM because gcc-11 does not support
+	    # -mabi=aapcs-linux
+	    echo "gcc-9";;
+	*)
+	    echo "gcc";;
+    esac
+}
+
 enable() {
     if grep -qw "$1" .config; then
 	sed -i "s/^\(\|# \)$1\( \|=\).*/$1=$2/" .config
@@ -97,7 +108,7 @@ test_options() {
 }
 
 rebuild_scsi_drivers() {
-    local arch="$1"
+    local arch="$1" cc_prefix
 
     case "$arch" in
 	arm|m68k|mips|parisc)
@@ -253,19 +264,22 @@ rebuild_scsi_drivers() {
 	CONFIG_VIRTIO_MENU=y
 	CONFIG_WERROR=n
     )
-    # Avoid CPU_32v3 since gcc-10 does not support it.
     if [ "$arch" = "arm" ]; then
+	# gcc-9 and later do not support armv3m. Hence the sed commands below.
+	sed -i 's/GCC_VERSION < 90100 && //' arch/arm/Kconfig
 	sed -i 's/select CPU_32v3/select CPU_32v4/' arch/arm/mm/Kconfig
     fi
     set_options "${options[@]}"
     cat .config >oldconfig-output.txt
-    make ARCH="$arch" CROSS_COMPILE="$(cc_prefix "$arch")" oldconfig \
-	 </dev/null >>oldconfig-output.txt 2>&1 ||
+    cc_prefix=$(cc_prefix "$arch")
+    MAKE_ARGS=(ARCH="$arch")
+    MAKE_ARGS+=(CROSS_COMPILE="${cc_prefix}")
+    MAKE_ARGS+=(CC="${cc_prefix}$(compiler_name "$arch")")
+    make "${MAKE_ARGS[@]}" oldconfig </dev/null >>oldconfig-output.txt 2>&1 ||
 	cat oldconfig-output.txt
     test_options "${options[@]}"
-    make ARCH="$arch" CROSS_COMPILE="$(cc_prefix "$arch")" -j"$(nproc)" \
-	 </dev/null
-    git checkout HEAD arch/arm/mm/Kconfig
+    make "${MAKE_ARGS[@]}" -j"$(nproc)" </dev/null
+    git checkout HEAD arch/arm/Kconfig arch/arm/mm/Kconfig
 }
 
 # Arguments: $1: architecture; $2: cross-compilation prefix.
@@ -346,10 +360,12 @@ build_one_arch() {
 	    ;;
 	arm)
 	    options+=(
+		CONFIG_AEABI=y
 		CONFIG_ARCH_RPC=y
+		CONFIG_FPE_FASTFPE=n
 		CONFIG_FPE_NWFPE=y
 		CONFIG_FPE_NWFPE_XP=n
-		CONFIG_FPE_FASTFPE=n
+		CONFIG_OABI_COMPAT=y
 		CONFIG_SCSI_ACORNSCSI_3=y
 		CONFIG_SCSI_ACORNSCSI_SYNC=y
 		CONFIG_SCSI_ARXESCSI=y
