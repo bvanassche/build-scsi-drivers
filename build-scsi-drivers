@@ -51,9 +51,14 @@ cc_prefix() {
 compiler_name() {
     case "$1" in
 	arm)
-	    # Use gcc-9 for ARM because gcc-11 does not support
-	    # -mabi=aapcs-linux
-	    echo "gcc-9";;
+	    if type -p dpkg-query >&/dev/null; then
+		# Use gcc-9 for ARM because gcc-11 does not support
+		# -mabi=aapcs-linux
+		echo "gcc-9"
+	    else
+		echo "gcc-7"
+	    fi
+	    ;;
 	*)
 	    echo "gcc";;
     esac
