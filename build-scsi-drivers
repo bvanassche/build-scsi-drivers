@@ -284,7 +284,9 @@ rebuild_scsi_drivers() {
 	cat oldconfig-output.txt
     test_options "${options[@]}"
     make "${MAKE_ARGS[@]}" -j"$(nproc)" </dev/null
-    git checkout HEAD arch/arm/Kconfig arch/arm/mm/Kconfig
+    if [ "$arch" = "arm" ]; then
+	git checkout HEAD arch/arm/Kconfig arch/arm/mm/Kconfig
+    fi
 }
 
 # Arguments: $1: architecture; $2: cross-compilation prefix.
