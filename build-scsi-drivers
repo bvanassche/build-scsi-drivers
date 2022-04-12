@@ -207,7 +207,6 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
 		CONFIG_SCSI_UFS_FAULT_INJECTION=y
 		CONFIG_SCSI_UFS_HPB=y
-		CONFIG_SCSI_UFS_HWMON=y
 		CONFIG_SCSI_WD719X=y
 	    )
 	    # InfiniBand driver
