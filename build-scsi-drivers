@@ -94,6 +94,10 @@ test_options() {
     local c
 
     for o in "$@"; do
+	if [ -z "$o" ]; then
+	    echo "Empty strings are not allowed in the option list"
+	    exit 1
+	fi
 	c="${o%=[myn]}"
 	if [ "${o%=[my]}" != "$o" ]; then
 	    if ! grep -q "^$c=[my]" .config; then
@@ -178,8 +182,6 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_INITIO=y
 		CONFIG_SCSI_IPR=y
 		CONFIG_SCSI_IPS=y
-		$(git grep -q 'config SCSI_MPI3MR' drivers/scsi/mpi3mr &&
-		      echo CONFIG_SCSI_MPI3MR=y)
 		CONFIG_SCSI_MPT2SAS=y
 		CONFIG_SCSI_MPT3SAS=y
 		CONFIG_SCSI_MVSAS=y
@@ -205,10 +207,17 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_UFS_CRYPTO=y
 		CONFIG_SCSI_UFS_DWC_TC_PCI=y
 		CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
-		CONFIG_SCSI_UFS_FAULT_INJECTION=y
-		CONFIG_SCSI_UFS_HPB=y
 		CONFIG_SCSI_WD719X=y
 	    )
+	    if git grep -q 'config SCSI_MPI3MR$' drivers/scsi; then
+		options+=(CONFIG_SCSI_MPI3MR=y)
+	    fi
+	    if git grep -q 'config SCSI_UFS_FAULT_INJECTION$' drivers; then
+		options+=(CONFIG_SCSI_UFS_FAULT_INJECTION=y)
+	    fi
+	    if git grep -q 'config SCSI_UFS_HPB$' drivers; then
+		options+=(CONFIG_SCSI_UFS_HPB=y)
+	    fi
 	    # InfiniBand driver
 	    options+=(
 		CONFIG_INFINIBAND=y
@@ -423,11 +432,13 @@ build_one_arch() {
 		CONFIG_SCSI_UFS_FAULT_INJECTION=y
 		CONFIG_SCSI_UFS_HISI=y
 		CONFIG_SCSI_UFS_HPB=y
-		CONFIG_SCSI_UFS_HWMON=y
 		CONFIG_SCSI_UFS_MEDIATEK=y
 		CONFIG_SCSI_UFS_QCOM=y
 		CONFIG_SCSI_UFS_TI_J721E=y
 	    )
+	    if git grep -q 'config SCSI_UFS_HWMON$' drivers/scsi; then
+		options+=(CONFIG_SCSI_UFS_HWMON=y)
+	    fi
 	    ;;
 	m68k)
 	    options+=(
