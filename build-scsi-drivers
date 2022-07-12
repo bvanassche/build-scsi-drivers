@@ -384,10 +384,14 @@ build_one_arch() {
 	    # 32-bit drivers
 	    options+=(
 		CONFIG_SCSI_BUSLOGIC=y
-		CONFIG_SCSI_DPT_I2O=y
 		CONFIG_SCSI_FLASHPOINT=y
 		CONFIG_SCSI_NSP32=y
 	    )
+	    # See also commit b04e75a4a8a8 ("scsi: dpt_i2o: Remove obsolete
+	    # driver"; v5.19).
+	    if git grep -q 'config SCSI_DPT_I2O$' drivers/scsi; then
+		options+=(CONFIG_SCSI_DPT_I2O=y)
+	    fi
 	    ;;
 	x86-64)
 	    options+=(
