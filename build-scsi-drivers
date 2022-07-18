@@ -401,10 +401,16 @@ build_one_arch() {
 		CONFIG_SCSI_HISI_SAS=y
 		CONFIG_SCSI_HISI_SAS_PCI=y
 		CONFIG_SCSI_SMARTPQI=y
-		CONFIG_UNISYSSPAR=y
-		CONFIG_UNISYS_VISORBUS=y
-		CONFIG_UNISYS_VISORHBA=y
 	    )
+	    # See also commit e5f45b011e4a ("staging: Remove the drivers for
+	    # the Unisys s-Par"; v5.19).
+	    if git grep -q 'config UNISYSSPAR$' drivers/scsi; then
+		options+=(
+		    CONFIG_UNISYSSPAR=y
+		    CONFIG_UNISYS_VISORBUS=y
+		    CONFIG_UNISYS_VISORHBA=y
+		)
+	    fi
 	    ;;
 	arm-rpc)
 	    options+=(
