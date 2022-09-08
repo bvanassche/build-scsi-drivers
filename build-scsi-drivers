@@ -463,6 +463,17 @@ build_one_arch() {
 		options+=(CONFIG_SCSI_UFS_HWMON=y)
 	    fi
 	    ;;
+	arm-ep93xx)
+	    options+=(
+		CONFIG_ARCH_MULTIPLATFORM=y
+		CONFIG_ARCH_MULTI_V7=n
+		CONFIG_ATAGS=y
+		CONFIG_MMU=y
+		CONFIG_ARCH_MULTI_V4T=y
+		CONFIG_CPU_LITTLE_ENDIAN=y
+		CONFIG_ARCH_EP93XX=y
+	    )
+	    ;;
 	m68k)
 	    options+=(
 		CONFIG_M68KCLASSIC=y
