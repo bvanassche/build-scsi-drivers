@@ -458,6 +458,7 @@ build_one_arch() {
 		CONFIG_SCSI_UFS_MEDIATEK=y
 		CONFIG_SCSI_UFS_QCOM=y
 		CONFIG_SCSI_UFS_TI_J721E=y
+		CONFIG_SMP=y
 	    )
 	    if git grep -q 'config SCSI_UFS_HWMON$' drivers/scsi; then
 		options+=(CONFIG_SCSI_UFS_HWMON=y)
