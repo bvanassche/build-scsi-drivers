@@ -308,7 +308,8 @@ rebuild_scsi_drivers() {
     )
     if [ "$arch" = "arm" ]; then
 	# gcc-9 and later do not support armv3m. Hence the sed commands below.
-	sed -i 's/GCC_VERSION < 90100 && //' arch/arm/Kconfig
+	sed -i 's/GCC_VERSION < 90100 && //' arch/arm/Kconfig \
+	    arch/arm/mach-rpc/Kconfig
 	sed -i 's/select CPU_32v3/select CPU_32v4/' arch/arm/mm/Kconfig
     fi
     rm -f .config
@@ -324,7 +325,8 @@ rebuild_scsi_drivers() {
     test_options "${options[@]}"
     make "${MAKE_ARGS[@]}" -j"$(nproc)" </dev/null
     if [ "$arch" = "arm" ]; then
-	git checkout HEAD arch/arm/Kconfig arch/arm/mm/Kconfig
+	git checkout HEAD arch/arm/Kconfig arch/arm/mm/Kconfig \
+	    arch/arm/mach-rpc/Kconfig
     fi
 }
 
@@ -419,6 +421,11 @@ build_one_arch() {
 	arm-rpc)
 	    options+=(
 		CONFIG_AEABI=y
+		CONFIG_ARCH_MULTI_V4=y
+		CONFIG_ARCH_MULTI_V4T=n
+		CONFIG_ARCH_MULTI_V5=n
+		CONFIG_ARCH_MULTI_V6=n
+		CONFIG_ARCH_MULTI_V7=n
 		CONFIG_ARCH_RPC=y
 		CONFIG_FPE_FASTFPE=n
 		CONFIG_FPE_NWFPE=y
