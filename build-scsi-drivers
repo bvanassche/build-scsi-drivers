@@ -95,29 +95,33 @@ set_options() {
 }
 
 test_options() {
-    local c
+    local c fail o
 
     for o in "$@"; do
 	if [ -z "$o" ]; then
 	    echo "Empty strings are not allowed in the option list"
-	    exit 1
+	    fail=1
+	    continue
 	fi
 	c="${o%=[myn]}"
 	if [ "${o%=[my]}" != "$o" ]; then
 	    if ! grep -q "^$c=[my]" .config; then
 		grep "${c}[= ]" .config || true
 		echo "$c has not been set"
-		exit 1
+		fail=1
 	    fi
 	else
 	    if ! grep -q "^# $c is not set" .config &&
 		    grep -qw "$c" .config; then
 		grep -w "$c" .config
 		echo "$c has not been disabled"
-		exit 1
+		fail=1
 	    fi
 	fi
     done
+    if [ -n "$fail" ]; then
+	exit 1
+    fi
 }
 
 rebuild_scsi_drivers() {
