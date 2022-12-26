@@ -467,6 +467,9 @@ build_one_arch() {
 		CONFIG_SCSI_UFS_HISI=y
 		CONFIG_SMP=y
 	    )
+	    if git grep -q '^config BLK_SUB_PAGE_SEGMENTS$' block; then
+		config+=(CONFIG_BLK_SUB_PAGE_SEGMENTS=y)
+	    fi
 	    if ! git grep -q 'Qualcomm MSM (non-multiplatform)'; then
 		config+=(CONFIG_ARCH_QCOM=y CONFIG_SCSI_UFS_QCOM=y)
 	    fi
