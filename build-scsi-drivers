@@ -245,7 +245,7 @@ rebuild_scsi_drivers() {
 	    for c in SCSI_FDOMAIN_PCI SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
 			 SCSI_UFS_FAULT_INJECTION SCSI_UFS_BSG \
 			 UFS_CDNS_PLATFORM SCSI_UFS_HPB; do
-		git grep -q "^config $c\$" drivers && options+=(CONFIG_${c}=y)
+		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
 	    done
 	    # InfiniBand driver
 	    options+=(
@@ -475,7 +475,7 @@ build_one_arch() {
 	    fi
 	    for c in SCSI_UFS_CDNS_PLATFORM SCSI_UFS_HPB SCSI_UFS_EXYNOS \
 		     SCSI_UFS_HWMON SCSI_UFS_MEDIATEK SCSI_UFS_TI_J721E; do
-		git grep -q "^config $c\$" drivers && options+=(CONFIG_${c}=y)
+		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
 	    done
 	    ;;
 	arm-ep93xx)
