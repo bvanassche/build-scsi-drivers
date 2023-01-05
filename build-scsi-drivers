@@ -301,7 +301,6 @@ rebuild_scsi_drivers() {
 	CONFIG_SOUND=n
 	CONFIG_STAGING=y
 	CONFIG_TARGET_CORE=y
-	CONFIG_WERROR=n
     )
     if [ "$arch" = "arm" ]; then
 	# gcc-9 and later do not support armv3m. Hence the sed commands below.
