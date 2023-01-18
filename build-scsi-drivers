@@ -479,7 +479,8 @@ build_one_arch() {
 		config+=(CONFIG_ARCH_QCOM=y CONFIG_SCSI_UFS_QCOM=y)
 	    fi
 	    for c in SCSI_UFS_CDNS_PLATFORM SCSI_UFS_HPB SCSI_UFS_EXYNOS \
-		     SCSI_UFS_HWMON SCSI_UFS_MEDIATEK SCSI_UFS_TI_J721E; do
+		     SCSI_UFS_HWMON SCSI_UFS_MEDIATEK SCSI_UFS_SPRD \
+		     SCSI_UFS_TI_J721E; do
 		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
 	    done
 	    ;;
