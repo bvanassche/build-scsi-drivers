@@ -149,11 +149,14 @@ rebuild_scsi_drivers() {
 		CONFIG_USB_SUPPORT=y
 		CONFIG_USB_UAS=y
 	    )
-	    if git grep -q '^config VIRTIO_MENU' drivers/virtio; then
-		options+=(CONFIG_VIRTIO_MENU=y)
-	    fi
 	    if git grep -q '^config PCMCIA_FDOMAIN$' drivers/scsi; then
 		options+=(CONFIG_PCMCIA_FDOMAIN=y)
+	    fi
+	    if git grep -q '^config SCSI_GDTH$' drivers/scsi; then
+		options+=(CONFIG_SCSI_GDTH=y)
+	    fi
+	    if git grep -q '^config VIRTIO_MENU' drivers/virtio; then
+		options+=(CONFIG_VIRTIO_MENU=y)
 	    fi
 	    ;;
     esac
