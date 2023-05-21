@@ -9,6 +9,8 @@ cc_prefix_debian() {
 	x86);;
 	arm)
 	    echo arm-linux-gnueabi-;;
+	arm64)
+	    echo aarch64-linux-gnu-;;
 	m68k)
 	    echo m68k-linux-gnu-;;
 	mips)
@@ -29,6 +31,8 @@ cc_prefix_suse() {
 	x86);;
 	arm)
 	    echo arm-suse-linux-gnueabi-;;
+	arm64)
+	    echo aarch64-suse-linux-;;
 	m68k)
 	    echo m68k-suse-linux-;;
 	mips)
@@ -162,6 +166,15 @@ rebuild_scsi_drivers() {
     esac
 
     case "$arch" in
+	arm64)
+	    options+=(
+		# Depends on PCI and CONFIG_OF.
+		CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
+	    )
+	    ;;
+    esac
+
+    case "$arch" in
 	arm|m68k|mips|parisc|um)
 	    ;;
 	*)
@@ -242,7 +255,6 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_UFSHCD_PCI=y
 		CONFIG_SCSI_UFSHCD_PLATFORM=y
 		CONFIG_SCSI_UFS_DWC_TC_PCI=y
-		CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
 		CONFIG_SCSI_WD719X=y
 	    )
 	    local c
@@ -499,6 +511,11 @@ build_one_arch() {
 		CONFIG_ARCH_EP93XX=y
 	    )
 	    ;;
+	arm64)
+	    options+=(
+		CONFIG_ARM64=y
+	    )
+	    ;;
 	m68k)
 	    options+=(
 		CONFIG_M68KCLASSIC=y
@@ -638,7 +655,8 @@ if [ -n "$1" ]; then
 	build_one_arch "${arch}"
     done
 else
-    for arch in x86-32 x86-64 arm-rpc arm-multi m68k m68k-sun3 m68k-sun3x \
+    for arch in x86-32 x86-64 arm64 arm-rpc arm-multi \
+		       m68k m68k-sun3 m68k-sun3x \
 		       mips-jazz mips-sgi mips-sni \
 		       parisc powerpc-32 powerpc-64 powerpc-ps3 s390 sparc um; do
 	build_one_arch "$arch"
