@@ -60,9 +60,9 @@ compiler_name() {
     case "$1" in
 	arm)
 	    if type -p dpkg-query >&/dev/null; then
-		# Use gcc-9 for ARM because gcc-11 does not support
+		# Use gcc-10 for ARM because gcc-11 does not support
 		# -mabi=aapcs-linux
-		echo "gcc-9"
+		echo "gcc-10"
 	    else
 		echo "gcc-7"
 	    fi
@@ -134,6 +134,21 @@ rebuild_scsi_drivers() {
     case "$arch" in
 	um)
 	    ;;
+	s390)
+	    options+=(
+		CONFIG_ATA=y
+		CONFIG_COMPILE_TEST=y
+		CONFIG_FIREWIRE=y
+		CONFIG_FIREWIRE_SBP2=y
+		CONFIG_PARPORT=y
+		CONFIG_PCCARD=y
+		CONFIG_SCSI_LOWLEVEL_PCMCIA=y
+		CONFIG_USB=y
+		CONFIG_USB_MICROTEK=y
+		CONFIG_USB_STORAGE=y
+		CONFIG_USB_SUPPORT=y
+		CONFIG_USB_UAS=y
+	    );;
 	*)
 	    options+=(
 		CONFIG_ATA=y
@@ -175,6 +190,41 @@ rebuild_scsi_drivers() {
     esac
 
     case "$arch" in
+	arm|m68k|mips|parisc|s390|um)
+	    ;;
+	*)
+	    # I/O port PCI drivers.
+	    options+=(
+		CONFIG_BLK_DEV_3W_XXXX_RAID=y
+		CONFIG_FUSION=y
+		CONFIG_FUSION_FC=y
+		CONFIG_FUSION_SAS=y
+		CONFIG_FUSION_SPI=y
+		CONFIG_MEGARAID_LEGACY=y
+		CONFIG_MEGARAID_MAILBOX=y
+		CONFIG_MEGARAID_MM=y
+		CONFIG_MEGARAID_NEWGEN=y
+		CONFIG_SCSI_ACARD=y
+		CONFIG_SCSI_ADVANSYS=y
+		CONFIG_SCSI_AIC79XX=y
+		CONFIG_SCSI_AIC7XXX=y
+		CONFIG_SCSI_AIC94XX=y
+		CONFIG_SCSI_DC395x=y
+		CONFIG_SCSI_DMX3191D=y
+		CONFIG_SCSI_INIA100=y
+		CONFIG_SCSI_INITIO=y
+		CONFIG_SCSI_IPS=y
+		CONFIG_SCSI_MVSAS=y
+		CONFIG_SCSI_QLA_FC=y
+	    )
+	    local c
+	    for c in SCSI_FDOMAIN_PCI; do
+		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
+	    done
+	    ;;
+    esac
+
+    case "$arch" in
 	arm|m68k|mips|parisc|um)
 	    ;;
 	*)
@@ -190,16 +240,7 @@ rebuild_scsi_drivers() {
 	    options+=(
 		CONFIG_ATA_PIIX=y
 		CONFIG_BE2ISCSI=y
-		CONFIG_BLK_DEV_3W_XXXX_RAID=y
 		CONFIG_FCOE=y
-		CONFIG_FUSION=y
-		CONFIG_FUSION_FC=y
-		CONFIG_FUSION_SAS=y
-		CONFIG_FUSION_SPI=y
-		CONFIG_MEGARAID_LEGACY=y
-		CONFIG_MEGARAID_MAILBOX=y
-		CONFIG_MEGARAID_MM=y
-		CONFIG_MEGARAID_NEWGEN=y
 		CONFIG_MEGARAID_SAS=y
 		CONFIG_QED=y
 		CONFIG_QEDF=y
@@ -214,11 +255,6 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_3W_9XXX=y
 		CONFIG_SCSI_3W_SAS=y
 		CONFIG_SCSI_AACRAID=y
-		CONFIG_SCSI_ACARD=y
-		CONFIG_SCSI_ADVANSYS=y
-		CONFIG_SCSI_AIC79XX=y
-		CONFIG_SCSI_AIC7XXX=y
-		CONFIG_SCSI_AIC94XX=y
 		CONFIG_SCSI_AM53C974=y
 		CONFIG_SCSI_ARCMSR=y
 		CONFIG_SCSI_BFA_FC=y
@@ -227,24 +263,17 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_CHELSIO_FCOE=y
 		CONFIG_SCSI_CXGB3_ISCSI=y
 		CONFIG_SCSI_CXGB4_ISCSI=y
-		CONFIG_SCSI_DC395x=y
-		CONFIG_SCSI_DMX3191D=y
 		CONFIG_SCSI_ESAS2R=y
 		CONFIG_SCSI_HPSA=y
 		CONFIG_SCSI_HPTIOP=y
-		CONFIG_SCSI_INIA100=y
-		CONFIG_SCSI_INITIO=y
 		CONFIG_SCSI_IPR=y
-		CONFIG_SCSI_IPS=y
 		CONFIG_SCSI_MPT2SAS=y
 		CONFIG_SCSI_MPT3SAS=y
-		CONFIG_SCSI_MVSAS=y
 		CONFIG_SCSI_MVUMI=y
 		CONFIG_SCSI_PM8001=y
 		CONFIG_SCSI_PM8001=y
 		CONFIG_SCSI_PMCRAID=y
 		CONFIG_SCSI_PMCRAID=y
-		CONFIG_SCSI_QLA_FC=y
 		CONFIG_SCSI_QLA_ISCSI=y
 		CONFIG_SCSI_QLOGIC_1280=y
 		CONFIG_SCSI_SNIC=y
@@ -258,7 +287,7 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_WD719X=y
 	    )
 	    local c
-	    for c in SCSI_FDOMAIN_PCI SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
+	    for c in SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
 			 SCSI_UFS_CRYPTO SCSI_UFS_FAULT_INJECTION SCSI_UFS_BSG \
 			 UFS_CDNS_PLATFORM SCSI_UFS_HPB; do
 		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
