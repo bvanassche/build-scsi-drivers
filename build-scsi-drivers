@@ -11,6 +11,8 @@ cc_prefix_debian() {
 	    echo arm-linux-gnueabi-;;
 	arm64)
 	    echo aarch64-linux-gnu-;;
+	arm64_gcc_9)
+	    echo aarch64-none-linux-gnu-;;
 	m68k)
 	    echo m68k-linux-gnu-;;
 	mips)
@@ -33,6 +35,8 @@ cc_prefix_suse() {
 	    echo arm-suse-linux-gnueabi-;;
 	arm64)
 	    echo aarch64-suse-linux-;;
+	arm64_gcc_9)
+	    echo aarch64-none-linux-gnu-;;
 	m68k)
 	    echo m68k-suse-linux-;;
 	mips)
@@ -181,7 +185,7 @@ rebuild_scsi_drivers() {
     esac
 
     case "$arch" in
-	arm64)
+	arm64*)
 	    options+=(
 		# Depends on PCI and CONFIG_OF.
 		CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
@@ -316,8 +320,10 @@ rebuild_scsi_drivers() {
 	CONFIG_DEBUG_KERNEL=y
 	CONFIG_DEVFREQ_GOV_SIMPLE_ONDEMAND=y
 	CONFIG_ENCLOSURE_SERVICES=y
+	CONFIG_EXPERT=y
 	CONFIG_FAULT_INJECTION=y
 	CONFIG_INET=y
+	CONFIG_INIT_STACK_NONE=y
 	CONFIG_IPV6=y
 	CONFIG_ISCSI_TCP=y
 	CONFIG_LIBFC=y
@@ -327,6 +333,8 @@ rebuild_scsi_drivers() {
 	CONFIG_NET=y
 	CONFIG_PM_DEVFREQ=y
 	CONFIG_RAID_ATTRS=y
+	CONFIG_RANDOMIZE_KSTACK_OFFSET=n
+	CONFIG_RANDSTRUCT_NONE=y
 	CONFIG_SCSI=y
 	CONFIG_SCSI_CONSTANTS=y
 	CONFIG_SCSI_DEBUG=y
@@ -360,11 +368,17 @@ rebuild_scsi_drivers() {
 	done
 	sed -i 's/select CPU_32v3/select CPU_32v4/' arch/arm/mm/Kconfig
     fi
+    (
     rm -f .config
     touch .config
     set_options "${options[@]}"
     cat .config >oldconfig-output.txt
     cc_prefix=$(cc_prefix "$arch")
+    if [ "$arch" = arm64_gcc_9 ]; then
+	# See also https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
+	export PATH="$HOME/software/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH"
+	arch=arm64
+    fi
     MAKE_ARGS=(ARCH="$arch")
     MAKE_ARGS+=(CROSS_COMPILE="${cc_prefix}")
     MAKE_ARGS+=(CC="${cc_prefix}$(compiler_name "$arch")")
@@ -381,6 +395,7 @@ rebuild_scsi_drivers() {
 	    fi
 	done
     fi
+    )
 }
 
 # Arguments: $1: architecture; $2: cross-compilation prefix.
@@ -540,7 +555,7 @@ build_one_arch() {
 		CONFIG_ARCH_EP93XX=y
 	    )
 	    ;;
-	arm64)
+	arm64*)
 	    options+=(
 		CONFIG_ARM64=y
 	    )
@@ -684,7 +699,7 @@ if [ -n "$1" ]; then
 	build_one_arch "${arch}"
     done
 else
-    for arch in x86-32 x86-64 arm64 arm-rpc arm-multi \
+    for arch in x86-32 x86-64 arm64 arm64_gcc_9 arm-rpc arm-multi \
 		       m68k m68k-sun3 m68k-sun3x \
 		       mips-jazz mips-sgi mips-sni \
 		       parisc powerpc-32 powerpc-64 powerpc-ps3 s390 sparc um; do
