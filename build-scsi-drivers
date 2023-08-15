@@ -138,7 +138,7 @@ rebuild_scsi_drivers() {
     case "$arch" in
 	um)
 	    ;;
-	s390)
+	m68k|s390)
 	    options+=(
 		CONFIG_ATA=y
 		CONFIG_COMPILE_TEST=y
