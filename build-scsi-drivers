@@ -334,7 +334,6 @@ rebuild_scsi_drivers() {
 	CONFIG_PM_DEVFREQ=y
 	CONFIG_RAID_ATTRS=y
 	CONFIG_RANDOMIZE_KSTACK_OFFSET=n
-	CONFIG_RANDSTRUCT_NONE=y
 	CONFIG_SCSI=y
 	CONFIG_SCSI_CONSTANTS=y
 	CONFIG_SCSI_DEBUG=y
@@ -357,6 +356,9 @@ rebuild_scsi_drivers() {
     )
     if git grep -q '^config BLK_INLINE_ENCRYPTION$' block; then
 	options+=(CONFIG_BLK_INLINE_ENCRYPTION=y)
+    fi
+    if grep -q '^config RANDSTRUCT' security/Kconfig.hardening; then
+	options+=(CONFIG_RANDSTRUCT_NONE=y)
     fi
     if [ "$arch" = "arm" ]; then
 	# gcc-9 and later do not support armv3m. Hence the sed commands below.
