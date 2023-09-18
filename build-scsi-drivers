@@ -455,7 +455,6 @@ build_one_arch() {
 	    options+=(
 		CONFIG_PARPORT_PC=y
 		CONFIG_SCSI_IMM=y
-		CONFIG_SCSI_IZIP_EPP16=y
 		CONFIG_SCSI_PPA=y
 	    )
 	    # 32-bit drivers
