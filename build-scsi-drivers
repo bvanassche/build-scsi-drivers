@@ -157,6 +157,7 @@ add_arm_ufs_drivers() {
 rebuild_scsi_drivers() {
     local arch="$1" cc_prefix
 
+    # ATA, GDTH, Firewire, PCMCIA, USB and virtio drivers.
     case "$arch" in
 	um)
 	    ;;
@@ -206,11 +207,11 @@ rebuild_scsi_drivers() {
 	    ;;
     esac
 
+    # I/O port PCI drivers and Fdomain driver.
     case "$arch" in
 	arm|m68k|mips|parisc|s390|um)
 	    ;;
 	*)
-	    # I/O port PCI drivers.
 	    options+=(
 		CONFIG_BLK_DEV_3W_XXXX_RAID=y
 		CONFIG_FUSION=y
@@ -241,6 +242,7 @@ rebuild_scsi_drivers() {
 	    ;;
     esac
 
+    # PCI and InfiniBand drivers.
     case "$arch" in
 	arm|m68k|mips|parisc|um)
 	    ;;
@@ -253,7 +255,6 @@ rebuild_scsi_drivers() {
 		CONFIG_VIRTIO=y
 		CONFIG_VIRTIO_PCI=y
 	    )
-	    # PCI drivers.
 	    options+=(
 		CONFIG_ATA_PIIX=y
 		CONFIG_BE2ISCSI=y
@@ -309,7 +310,6 @@ rebuild_scsi_drivers() {
 			 UFS_CDNS_PLATFORM SCSI_UFS_HPB; do
 		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
 	    done
-	    # InfiniBand driver
 	    options+=(
 		CONFIG_INFINIBAND=y
 		CONFIG_INFINIBAND_ADDR_TRANS=y
