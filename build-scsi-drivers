@@ -3,12 +3,16 @@
 #
 # Build all Linux kernel SCSI drivers. This is nontrivial because multiple SCSI
 # drivers are only available for a specific architecture.
+#
+# Requirements:
+# https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.bz2
+# https://developer.arm.com/-/media/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi.tar.bz2
 
 cc_prefix_debian() {
     case "$1" in
 	x86);;
 	arm)
-	    echo arm-linux-gnueabi-;;
+	    echo arm-none-eabi-;;
 	arm64)
 	    echo aarch64-linux-gnu-;;
 	arm64_gcc_9)
@@ -66,7 +70,7 @@ compiler_name() {
 	    if type -p dpkg-query >&/dev/null; then
 		# Use gcc-10 for ARM because gcc-11 does not support
 		# -mabi=aapcs-linux
-		echo "gcc-10"
+		echo "gcc-10.3.1"
 	    else
 		echo "gcc-7"
 	    fi
@@ -132,6 +136,24 @@ test_options() {
     fi
 }
 
+add_arm_ufs_drivers() {
+    options+=(
+	CONFIG_ARCH_EXYNOS=y
+	CONFIG_ARCH_HISI=y
+	CONFIG_ARCH_MEDIATEK=y
+	CONFIG_SCSI_UFS_DWC_TC_PCI=y
+	CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
+    )
+    if ! git grep -q 'Qualcomm MSM (non-multiplatform)'; then
+	config+=(CONFIG_ARCH_QCOM=y CONFIG_SCSI_UFS_QCOM=y)
+    fi
+    for c in SCSI_UFS_CDNS_PLATFORM SCSI_UFS_CRYPTO SCSI_UFS_HPB \
+	     SCSI_UFS_EXYNOS SCSI_UFS_HISI SCSI_UFS_HWMON \
+	     SCSI_UFS_MEDIATEK SCSI_UFS_SPRD SCSI_UFS_TI_J721E; do
+	git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
+    done
+}
+
 rebuild_scsi_drivers() {
     local arch="$1" cc_prefix
 
@@ -181,15 +203,6 @@ rebuild_scsi_drivers() {
 	    if git grep -q '^config VIRTIO_MENU' drivers/virtio; then
 		options+=(CONFIG_VIRTIO_MENU=y)
 	    fi
-	    ;;
-    esac
-
-    case "$arch" in
-	arm64*)
-	    options+=(
-		# Depends on PCI and CONFIG_OF.
-		CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
-	    )
 	    ;;
     esac
 
@@ -375,11 +388,15 @@ rebuild_scsi_drivers() {
     set_options "${options[@]}"
     cat .config >oldconfig-output.txt
     cc_prefix=$(cc_prefix "$arch")
-    if [ "$arch" = arm64_gcc_9 ]; then
-	# See also https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.xz
-	export PATH="$HOME/software/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH"
-	arch=arm64
-    fi
+    case "$arch" in
+	arm64_gcc_9)
+	    export PATH="$HOME/software/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH"
+	    arch=arm64
+	    ;;
+	arm)
+	    export PATH="$HOME/software/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin:$PATH"
+	    ;;
+    esac
     MAKE_ARGS=(ARCH="$arch")
     MAKE_ARGS+=(CROSS_COMPILE="${cc_prefix}")
     MAKE_ARGS+=(CC="${cc_prefix}$(compiler_name "$arch")")
@@ -518,9 +535,6 @@ build_one_arch() {
 	arm-multi)
 	    options+=(
 		CONFIG_AEABI=y
-		CONFIG_ARCH_EXYNOS=y
-		CONFIG_ARCH_HISI=y
-		CONFIG_ARCH_MEDIATEK=y
 		CONFIG_ARCH_MULTIPLATFORM=y
 		CONFIG_ARCH_MULTI_V7=y
 		CONFIG_MMU=y
@@ -528,21 +542,12 @@ build_one_arch() {
 		CONFIG_SCSI_UFSHCD=y
 		CONFIG_SCSI_UFSHCD_PCI=y
 		CONFIG_SCSI_UFSHCD_PLATFORM=y
-		CONFIG_SCSI_UFS_DWC_TC_PCI=y
-		CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
 		CONFIG_SMP=y
 	    )
 	    if git grep -q '^config BLK_SUB_PAGE_SEGMENTS$' block; then
 		config+=(CONFIG_BLK_SUB_PAGE_SEGMENTS=y)
 	    fi
-	    if ! git grep -q 'Qualcomm MSM (non-multiplatform)'; then
-		config+=(CONFIG_ARCH_QCOM=y CONFIG_SCSI_UFS_QCOM=y)
-	    fi
-	    for c in SCSI_UFS_CDNS_PLATFORM SCSI_UFS_CRYPTO SCSI_UFS_HPB \
-		     SCSI_UFS_EXYNOS SCSI_UFS_HISI SCSI_UFS_HWMON \
-		     SCSI_UFS_MEDIATEK SCSI_UFS_SPRD SCSI_UFS_TI_J721E; do
-		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
-	    done
+	    add_arm_ufs_drivers
 	    ;;
 	arm-ep93xx)
 	    options+=(
@@ -559,6 +564,7 @@ build_one_arch() {
 	    options+=(
 		CONFIG_ARM64=y
 	    )
+	    add_arm_ufs_drivers
 	    ;;
 	m68k)
 	    options+=(
