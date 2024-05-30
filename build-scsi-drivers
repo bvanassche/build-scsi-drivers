@@ -66,7 +66,7 @@ cc_prefix() {
 
 compiler_name() {
     case "$1" in
-	arm)
+	arm-rpc)
 	    if type -p dpkg-query >&/dev/null; then
 		# Use gcc-10 for ARM because gcc-11 does not support
 		# -mabi=aapcs-linux
@@ -158,7 +158,7 @@ rebuild_scsi_drivers() {
     local arch="$1" cc_prefix
 
     # ATA, GDTH, Firewire, PCMCIA, USB and virtio drivers.
-    case "$arch" in
+    case "${arch%-*}" in
 	um)
 	    ;;
 	m68k|s390)
@@ -208,7 +208,7 @@ rebuild_scsi_drivers() {
     esac
 
     # I/O port PCI drivers and Fdomain driver.
-    case "$arch" in
+    case "${arch%-*}" in
 	arm|m68k|mips|parisc|s390|um)
 	    ;;
 	*)
@@ -243,7 +243,7 @@ rebuild_scsi_drivers() {
     esac
 
     # PCI and InfiniBand drivers.
-    case "$arch" in
+    case "${arch%-*}" in
 	arm|m68k|mips|parisc|um)
 	    ;;
 	*)
@@ -319,7 +319,7 @@ rebuild_scsi_drivers() {
 	    ;;
     esac
 
-    [ "$arch" = x86 ] && options+=(CONFIG_BLK_DEV_ZONED=y)
+    [ "${arch%-*}" = x86 ] && options+=(CONFIG_BLK_DEV_ZONED=y)
 
     options+=(
 	CONFIG_BLK_DEV_BSG=y
@@ -372,7 +372,7 @@ rebuild_scsi_drivers() {
     if grep -q '^config RANDSTRUCT' security/Kconfig.hardening 2>/dev/null; then
 	options+=(CONFIG_RANDSTRUCT_NONE=y)
     fi
-    if [ "$arch" = "arm" ]; then
+    if [ "${arch%-*}" = "arm" ]; then
 	# gcc-9 and later do not support armv3m. Hence the sed commands below.
 	local f
 	for f in arch/arm/Kconfig arch/arm/mach-rpc/Kconfig; do
@@ -387,8 +387,8 @@ rebuild_scsi_drivers() {
     touch .config
     set_options "${options[@]}"
     cat .config >oldconfig-output.txt
-    cc_prefix=$(cc_prefix "$arch")
-    case "$arch" in
+    cc_prefix=$(cc_prefix "${arch%-*}")
+    case "${arch%-*}" in
 	arm64_gcc_9)
 	    export PATH="$HOME/software/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH"
 	    arch=arm64
@@ -398,7 +398,7 @@ rebuild_scsi_drivers() {
 	    export KCFLAGS=-Wno-builtin-declaration-mismatch
 	    ;;
     esac
-    MAKE_ARGS=(ARCH="$arch")
+    MAKE_ARGS=(ARCH="${arch%-*}")
     MAKE_ARGS+=(CROSS_COMPILE="${cc_prefix}")
     MAKE_ARGS+=(CC="${cc_prefix}$(compiler_name "$arch")")
     make "${MAKE_ARGS[@]}" oldconfig </dev/null >>oldconfig-output.txt 2>&1 ||
@@ -732,7 +732,7 @@ build_one_arch() {
 	    return 1
 	    ;;
     esac
-    rebuild_scsi_drivers "${1%-*}"
+    rebuild_scsi_drivers "${1}"
 }
 
 set -e
