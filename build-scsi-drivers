@@ -395,6 +395,7 @@ rebuild_scsi_drivers() {
 	    ;;
 	arm)
 	    export PATH="$HOME/software/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin:$PATH"
+	    export KCFLAGS=-Wno-builtin-declaration-mismatch
 	    ;;
     esac
     MAKE_ARGS=(ARCH="$arch")
@@ -524,6 +525,7 @@ build_one_arch() {
 		CONFIG_SCSI_EESOXSCSI=y
 		CONFIG_SCSI_OAK1=y
 		CONFIG_SCSI_POWERTECSCSI=y
+		CONFIG_WERROR=n
 	    )
 	    local rpc_kconfig
 	    rpc_kconfig=$(git grep -l '^config ARCH_RPC$' 'arch/arm/**Kconfig')
@@ -543,6 +545,7 @@ build_one_arch() {
 		CONFIG_SCSI_UFSHCD_PCI=y
 		CONFIG_SCSI_UFSHCD_PLATFORM=y
 		CONFIG_SMP=y
+		CONFIG_WERROR=n
 	    )
 	    if git grep -q '^config BLK_SUB_PAGE_SEGMENTS$' block; then
 		config+=(CONFIG_BLK_SUB_PAGE_SEGMENTS=y)
@@ -558,6 +561,37 @@ build_one_arch() {
 		CONFIG_ARCH_MULTI_V4T=y
 		CONFIG_CPU_LITTLE_ENDIAN=y
 		CONFIG_ARCH_EP93XX=y
+		CONFIG_WERROR=n
+	    )
+	    ;;
+	arm-versatile)
+	    options+=(
+		CONFIG_ARCH_MULTIPLATFORM=n
+		CONFIG_ARCH_MULTI_V4=n
+		CONFIG_ARCH_MULTI_V4T=n
+		CONFIG_ARCH_MULTI_V5=y
+		CONFIG_ARCH_MULTI_V6=n
+		CONFIG_ARCH_MULTI_V7=n
+		CONFIG_ARCH_VERSATILE=y
+		CONFIG_CPU_LITTLE_ENDIAN=y
+		CONFIG_WERROR=n
+	    )
+	    ;;
+	arm-vexpress)
+	    options+=(
+		CONFIG_ARCH_MULTIPLATFORM=n
+		CONFIG_ARCH_MULTI_V4=n
+		CONFIG_ARCH_MULTI_V4T=n
+		CONFIG_ARCH_MULTI_V5=n
+		CONFIG_ARCH_MULTI_V6=n
+		CONFIG_ARCH_MULTI_V7=y
+		CONFIG_SMP=y
+		CONFIG_MCPM=y
+		CONFIG_ARCH_VEXPRESS_TC2_PM=y
+		CONFIG_ARCH_VEXPRESS=y
+		CONFIG_ARCH_VEXPRESS_SPC=y
+		CONFIG_CPU_LITTLE_ENDIAN=y
+		CONFIG_WERROR=n
 	    )
 	    ;;
 	arm64*)
@@ -628,6 +662,7 @@ build_one_arch() {
 		CONFIG_MIPS=y
 		CONFIG_SGI_IP28=n
 		CONFIG_SNI_RM=n
+		CONFIG_WERROR=n
 	    )
 	    ;;
 	mips-sgi)
@@ -635,6 +670,7 @@ build_one_arch() {
 		CONFIG_SGIWD93_SCSI=y
 		CONFIG_SGI_IP28=y
 		CONFIG_SNI_RM=n
+		CONFIG_WERROR=n
 	    )
 	    ;;
 	mips-sni)
@@ -642,6 +678,7 @@ build_one_arch() {
 		CONFIG_SCSI_SNI_53C710=y
 		CONFIG_SGI_IP28=n
 		CONFIG_SNI_RM=y
+		CONFIG_WERROR=n
 	    )
 	    ;;
 	parisc)
@@ -706,6 +743,7 @@ if [ -n "$1" ]; then
     done
 else
     for arch in x86-32 x86-64 arm64 arm64_gcc_9 arm-rpc arm-multi \
+		       arm-ep93xx arm-versatile arm-vexpress \
 		       m68k m68k-sun3 m68k-sun3x \
 		       mips-jazz mips-sgi mips-sni \
 		       parisc powerpc-32 powerpc-64 powerpc-ps3 s390 sparc um; do
