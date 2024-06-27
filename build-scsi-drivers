@@ -395,7 +395,7 @@ rebuild_scsi_drivers() {
 	    ;;
 	arm)
 	    export PATH="$HOME/software/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin:$PATH"
-	    export KCFLAGS=-Wno-builtin-declaration-mismatch
+	    export KCFLAGS="-Wno-builtin-declaration-mismatch -Wno-format"
 	    ;;
     esac
     MAKE_ARGS=(ARCH="${arch%-*}")
