@@ -698,12 +698,13 @@ build_one_arch() {
 	    ;;
 	powerpc-64)
 	    options+=(
+		CONFIG_CXLFLASH=y
 		CONFIG_PPC64=y
 		CONFIG_PPC_BOOK3S=y
 		CONFIG_PPC_PSERIES=y
-		CONFIG_SCSI_IBMVSCSI=y
 		CONFIG_SCSI_IBMVFC=y
-		CONFIG_CXLFLASH=y
+		CONFIG_SCSI_IBMVSCSI=y
+		CONFIG_SCSI_IBMVSCSIS=y
 	    )
 	    ;;
 	powerpc-ps3)
