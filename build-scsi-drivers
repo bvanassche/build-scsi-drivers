@@ -408,7 +408,7 @@ rebuild_scsi_drivers() {
 	cat oldconfig-output.txt
     test_options "${options[@]}"
     make "${MAKE_ARGS[@]}" -j"$(nproc)" </dev/null
-    if [ "$arch" = "arm" ]; then
+    if [ "${arch%-*}" = "arm" ]; then
 	local f
 	for f in arch/arm/Kconfig arch/arm/mm/Kconfig \
 				  arch/arm/mach-rpc/Kconfig; do
