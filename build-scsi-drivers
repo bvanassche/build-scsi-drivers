@@ -152,6 +152,9 @@ add_arm_ufs_drivers() {
 	     SCSI_UFS_MEDIATEK SCSI_UFS_SPRD SCSI_UFS_TI_J721E; do
 	git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
     done
+    if git grep -q 'config ARCH_RENESAS' arch/arm64/Kconfig.platforms; then
+	options+=(CONFIG_ARCH_RENESAS=y CONFIG_SCSI_UFS_RENESAS=y)
+    fi
 }
 
 rebuild_scsi_drivers() {
