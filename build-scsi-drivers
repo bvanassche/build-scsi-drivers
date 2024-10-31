@@ -266,7 +266,6 @@ rebuild_scsi_drivers() {
 		CONFIG_QED=y
 		CONFIG_QEDF=y
 		CONFIG_QEDI=y
-		CONFIG_RTS5208=y
 		CONFIG_SATA_AHCI=y
 		CONFIG_SATA_DWC=y
 		CONFIG_SATA_INIC162X=y
@@ -308,7 +307,7 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_WD719X=y
 	    )
 	    local c
-	    for c in SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
+	    for c in RTS5208 SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
 			 SCSI_UFS_CRYPTO SCSI_UFS_FAULT_INJECTION SCSI_UFS_BSG \
 			 UFS_CDNS_PLATFORM SCSI_UFS_HPB; do
 		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
