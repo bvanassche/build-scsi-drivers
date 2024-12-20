@@ -636,7 +636,6 @@ build_one_arch() {
 	    ;;
 	m68k-sun3)
 	    options+=(
-		CONFIG_M68KCLASSIC=y
 		CONFIG_MMU=y
 		CONFIG_MMU_SUN3=y
 		CONFIG_MMU_MOTOROLA=n
