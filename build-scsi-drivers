@@ -702,7 +702,6 @@ build_one_arch() {
 	    ;;
 	powerpc-64)
 	    options+=(
-		CONFIG_CXLFLASH=y
 		CONFIG_PPC64=y
 		CONFIG_PPC_BOOK3S=y
 		CONFIG_PPC_PSERIES=y
@@ -710,6 +709,9 @@ build_one_arch() {
 		CONFIG_SCSI_IBMVSCSI=y
 		CONFIG_SCSI_IBMVSCSIS=y
 	    )
+	    if git grep -q '^config CXLFLASH'; then
+		options+=(CONFIG_CXLFLASH=y)
+	    fi
 	    ;;
 	powerpc-ps3)
 	    options+=(
