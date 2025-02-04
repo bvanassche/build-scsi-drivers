@@ -8,7 +8,7 @@
 # https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu.tar.bz2
 # https://developer.arm.com/-/media/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi.tar.bz2
 
-cc_prefix_debian() {
+gcc_prefix_debian() {
     case "$1" in
 	x86);;
 	arm)
@@ -32,7 +32,7 @@ cc_prefix_debian() {
     esac
 }
 
-cc_prefix_suse() {
+gcc_prefix_suse() {
     case "$1" in
 	x86);;
 	arm)
@@ -56,15 +56,42 @@ cc_prefix_suse() {
     esac
 }
 
-cc_prefix() {
+gcc_prefix() {
     if type -p dpkg-query >&/dev/null; then
-	cc_prefix_debian "$1"
+	gcc_prefix_debian "$1"
     else
-	cc_prefix_suse "$1"
+	gcc_prefix_suse "$1"
     fi
 }
 
 compiler_name() {
+    if [ -n "${use_clang}" ]; then
+	case "$1" in
+	    x86-32*)
+		echo "clang --target=i386-linux-gnu";;
+	    x86-64*)
+		echo "clang --target=x86_64-linux-gnu";;
+	    arm64*)
+		echo "clang --target=aarch64-linux-gnu -march=armv8-a";;
+	    arm*)
+		echo "clang --target=arm-linux-gnu";;
+	    mips*)
+		echo "clang --target=mips-linux-gnu";;
+	    powerpc-32*)
+		echo "clang --target=ppc32-linux-gnu";;
+	    powerpc-64*)
+		echo "clang --target=ppc64-linux-gnu";;
+	    sparc*)
+		echo "clang --target=sparc-linux-gnu";;
+	    um*)
+		echo "clang";;
+	    *)
+		echo false
+		return 1;;
+	esac
+	return
+    fi
+
     case "$1" in
 	arm-rpc)
 	    if type -p dpkg-query >&/dev/null; then
@@ -158,7 +185,7 @@ add_arm_ufs_drivers() {
 }
 
 rebuild_scsi_drivers() {
-    local arch="$1" cc_prefix
+    local arch="$1" gcc_prefix MAKE_ARGS=()
 
     # ATA, GDTH, Firewire, PCMCIA, USB and virtio drivers.
     case "${arch%-*}" in
@@ -239,6 +266,7 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_QLA_FC=y
 	    )
 	    local c
+	    # shellcheck disable=SC2043
 	    for c in SCSI_FDOMAIN_PCI; do
 		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
 	    done
@@ -389,23 +417,35 @@ rebuild_scsi_drivers() {
     touch .config
     set_options "${options[@]}"
     cat .config >oldconfig-output.txt
-    cc_prefix=$(cc_prefix "${arch%-*}")
-    case "${arch%-*}" in
-	arm64_gcc_9)
-	    export PATH="$HOME/software/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH"
-	    arch=arm64
-	    ;;
-	arm)
-	    export PATH="$HOME/software/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin:$PATH"
-	    export KCFLAGS="-Wno-builtin-declaration-mismatch -Wno-format"
-	    ;;
-	sparc)
-	    export KCFLAGS="-Wno-cpp"
-	    ;;
-    esac
-    MAKE_ARGS=(ARCH="${arch%-*}")
-    MAKE_ARGS+=(CROSS_COMPILE="${cc_prefix}")
-    MAKE_ARGS+=(CC="${cc_prefix}$(compiler_name "$arch")")
+    if [ -n "${use_clang}" ]; then
+	MAKE_ARGS+=(LLVM=1)
+	export LD="ld.lld ${CC#clang }"
+	export AR=llvm-ar
+	export NM=llvm-nm
+	export OBJCOPY=llvm-objcopy
+	export OBJDUMP=llvm-objdump
+	export STRIP=llvm-strip
+	export READELF=llvm-readelf
+	gcc_prefix=""
+    else
+	gcc_prefix=$(gcc_prefix "${arch%-*}")
+	case "${arch%-*}" in
+	    arm64_gcc_9)
+		export PATH="$HOME/software/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH"
+		arch=arm64
+		;;
+	    arm)
+		export PATH="$HOME/software/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin:$PATH"
+		export KCFLAGS="-Wno-builtin-declaration-mismatch -Wno-format"
+		;;
+	    sparc)
+		export KCFLAGS="-Wno-cpp"
+		;;
+	esac
+    fi
+    MAKE_ARGS+=(ARCH="${arch%-*}")
+    MAKE_ARGS+=(CROSS_COMPILE="${gcc_prefix}")
+    MAKE_ARGS+=(CC="${gcc_prefix}$(compiler_name "$arch")")
     make "${MAKE_ARGS[@]}" oldconfig </dev/null >>oldconfig-output.txt 2>&1 ||
 	cat oldconfig-output.txt
     test_options "${options[@]}"
@@ -744,16 +784,27 @@ build_one_arch() {
 
 set -e
 
+#use_clang=true
+
 if [ -n "$1" ]; then
     for arch in "$@"; do
 	build_one_arch "${arch}"
     done
 else
-    for arch in x86-32 x86-64 arm64 arm64_gcc_9 arm-rpc arm-multi \
-		       arm-ep93xx arm-versatile arm-vexpress \
-		       m68k m68k-sun3 m68k-sun3x \
-		       mips-jazz mips-sgi mips-sni \
-		       parisc powerpc-32 powerpc-64 powerpc-ps3 s390 sparc um; do
+    if [ -n "${use_clang}" ]; then
+	archs=(
+	    x86-32 x86-64 arm64 powerpc-32 powerpc-64 um
+	)
+    else
+	archs=(
+	    x86-32 x86-64 arm64 arm64_gcc_9 arm-rpc arm-multi
+	    arm-ep93xx arm-versatile arm-vexpress
+	    m68k m68k-sun3 m68k-sun3x
+	    mips-jazz mips-sgi mips-sni
+	    parisc powerpc-32 powerpc-64 powerpc-ps3 s390 sparc um
+	)
+    fi
+    for arch in "${archs[@]}"; do
 	build_one_arch "$arch"
     done
 fi
