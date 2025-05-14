@@ -481,7 +481,6 @@ build_one_arch() {
 		CONFIG_HYPERVISOR_GUEST=y
 		CONFIG_ISA=y
 		CONFIG_ISA_DMA_API=y
-		CONFIG_NOHIGHMEM=y
 		CONFIG_PARAVIRT=y
 		CONFIG_PCMCIA_NINJA_SCSI=y
 		CONFIG_SCSI_ISCI=y
@@ -492,6 +491,9 @@ build_one_arch() {
 		CONFIG_X86_PAE=y
 		CONFIG_XEN=y
 	    )
+	    if git grep -q '^config NOHIGHMEM$' arch/x86; then
+		options+=(CONFIG_NOHIGHMEM=y)
+	    fi
 	    # ISA drivers
 	    options+=(
 		CONFIG_SCSI_FDOMAIN_ISA=y
