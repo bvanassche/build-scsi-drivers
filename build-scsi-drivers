@@ -418,17 +418,19 @@ rebuild_scsi_drivers() {
     set_options "${options[@]}"
     cat .config >oldconfig-output.txt
     if [ -n "${use_clang}" ]; then
+	gcc_prefix=""
+	CC="${gcc_prefix}$(compiler_name "$arch")"
 	MAKE_ARGS+=(LLVM=1)
-	export LD="ld.lld ${CC#clang }"
+	export LD=ld.lld
 	export AR=llvm-ar
 	export NM=llvm-nm
 	export OBJCOPY=llvm-objcopy
 	export OBJDUMP=llvm-objdump
 	export STRIP=llvm-strip
 	export READELF=llvm-readelf
-	gcc_prefix=""
     else
 	gcc_prefix=$(gcc_prefix "${arch%-*}")
+	CC="${gcc_prefix}$(compiler_name "$arch")"
 	case "${arch%-*}" in
 	    arm64_gcc_9)
 		export PATH="$HOME/software/gcc-arm-9.2-2019.12-x86_64-aarch64-none-linux-gnu/bin:$PATH"
@@ -445,7 +447,10 @@ rebuild_scsi_drivers() {
     fi
     MAKE_ARGS+=(ARCH="${arch%-*}")
     MAKE_ARGS+=(CROSS_COMPILE="${gcc_prefix}")
-    MAKE_ARGS+=(CC="${gcc_prefix}$(compiler_name "$arch")")
+    MAKE_ARGS+=(CC="${CC}")
+    if [ -n "${quiet}" ]; then
+	MAKE_ARGS+=("-s")
+    fi
     make "${MAKE_ARGS[@]}" oldconfig </dev/null >>oldconfig-output.txt 2>&1 ||
 	cat oldconfig-output.txt
     test_options "${options[@]}"
@@ -787,6 +792,17 @@ build_one_arch() {
 set -eu
 
 use_clang=
+quiet=
+while [ $# -ge 1 ] && [ "$1" != "${1#-}" ]; do
+    case "$1" in
+	-c)
+	    use_clang=true; shift;;
+	-q)
+	    quiet=true; shift;;
+	*)
+	    usage; exit 1;;
+    esac
+done
 
 if [ $# -ge 1 ]; then
     for arch in "$@"; do
