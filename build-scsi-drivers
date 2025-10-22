@@ -134,7 +134,7 @@ set_options() {
 }
 
 test_options() {
-    local c fail o
+    local c fail="" o
 
     for o in "$@"; do
 	if [ -z "$o" ]; then
@@ -784,11 +784,11 @@ build_one_arch() {
     rebuild_scsi_drivers "${1}"
 }
 
-set -e
+set -eu
 
-#use_clang=true
+use_clang=
 
-if [ -n "$1" ]; then
+if [ $# -ge 1 ]; then
     for arch in "$@"; do
 	build_one_arch "${arch}"
     done
