@@ -335,7 +335,7 @@ rebuild_scsi_drivers() {
 		CONFIG_SCSI_WD719X=y
 	    )
 	    local c
-	    for c in RTS5208 SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
+	    for c in SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
 			 SCSI_UFS_CRYPTO SCSI_UFS_FAULT_INJECTION SCSI_UFS_BSG \
 			 UFS_CDNS_PLATFORM SCSI_UFS_HPB; do
 		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
@@ -393,7 +393,7 @@ rebuild_scsi_drivers() {
 	CONFIG_SCSI_SRP_ATTRS=y
 	CONFIG_SECURITY=n
 	CONFIG_SOUND=n
-	CONFIG_STAGING=y
+	#CONFIG_STAGING=y
 	CONFIG_TARGET_CORE=y
     )
     if git grep -q '^config BLK_INLINE_ENCRYPTION$' block; then
