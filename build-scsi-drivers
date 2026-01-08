@@ -739,6 +739,15 @@ build_one_arch() {
 		CONFIG_SCSI_ZALON=y
 	    )
 	    ;;
+	powerpc-powermac)
+	    options+=(
+		CONFIG_PPC32=y
+		CONFIG_PPC_PMAC=y
+		CONFIG_I2C=y
+		CONFIG_I2C_POWERMAC=y
+		CONFIG_ADB_PMU=y
+	    )
+	    ;;
 	powerpc-32)
 	    options+=(
 		CONFIG_PPC32=y
