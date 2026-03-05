@@ -81,7 +81,7 @@ compiler_name() {
 		echo "clang --target=mips-linux-gnu";;
 	    powerpc-32*)
 		echo "clang --target=ppc32-linux-gnu";;
-	    powerpc-64*)
+	    powerpc-*)
 		echo "clang --target=ppc64-linux-gnu";;
 	    sparc*)
 		echo "clang --target=sparc-linux-gnu";;
@@ -771,6 +771,8 @@ build_one_arch() {
 	    ;;
 	powerpc-64)
 	    options+=(
+		CONFIG_HV_PERF_CTRS=y
+		CONFIG_PERF_EVENTS=y
 		CONFIG_PPC64=y
 		CONFIG_PPC_BOOK3S=y
 		CONFIG_PPC_PSERIES=y
@@ -784,9 +786,16 @@ build_one_arch() {
 	    ;;
 	powerpc-ps3)
 	    options+=(
+		CONFIG_KVM_BOOK3S_64=y
+		CONFIG_KVM_BOOK3S_64_HV=y
+		CONFIG_KVM_GUEST=y
 		CONFIG_PPC64=y
+		CONFIG_PPC_BOOK3S_64=y
+		CONFIG_PPC_POWERNV=y
 		CONFIG_PPC_PS3=y
 		CONFIG_PS3_ROM=y
+		CONFIG_SPU_FS=y
+		CONFIG_VIRTUALIZATION=y
 	    )
 	    ;;
 	sparc)
