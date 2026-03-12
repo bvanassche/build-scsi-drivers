@@ -10,7 +10,6 @@
 
 gcc_prefix_debian() {
     case "$1" in
-	x86);;
 	arm)
 	    echo arm-none-eabi-;;
 	arm64)
@@ -31,12 +30,12 @@ gcc_prefix_debian() {
 	    echo sh4-linux-gnu-;;
 	sparc)
 	    echo sparc64-linux-gnu-;;
+	x86);;
     esac
 }
 
 gcc_prefix_suse() {
     case "$1" in
-	x86);;
 	arm)
 	    echo arm-suse-linux-gnueabi-;;
 	arm64)
@@ -55,6 +54,7 @@ gcc_prefix_suse() {
 	    echo s390x-suse-linux-;;
 	sparc)
 	    echo sparc64-suse-linux-;;
+	x86);;
     esac
 }
 
