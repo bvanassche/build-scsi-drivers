@@ -68,23 +68,26 @@ gcc_prefix() {
 
 compiler_name() {
     if [ -n "${use_clang}" ]; then
+	# See also scripts/Makefile.clang in the Linux kernel tree.
 	case "$1" in
+	    arm*)
+		echo "clang --target=arm-linux-gnueabi";;
+	    arm64*)
+		echo "clang --target=aarch64-linux-gnu -march=armv8-a";;
+	    mips*)
+		echo "clang --target=mipsel-linux-gnu";;
+	    powerpc-32*)
+		echo "clang --target=ppc32-linux-gnu";;
+	    powerpc*)
+		echo "clang --target=powerpc64le-linux-gnu";;
+	    s390*)
+		echo "clang --target=s390x-linux-gnu";;
+	    sparc*)
+		echo "clang --target=sparc64-linux-gnu";;
 	    x86-32*)
 		echo "clang --target=i386-linux-gnu";;
 	    x86-64*)
 		echo "clang --target=x86_64-linux-gnu";;
-	    arm64*)
-		echo "clang --target=aarch64-linux-gnu -march=armv8-a";;
-	    arm*)
-		echo "clang --target=arm-linux-gnu";;
-	    mips*)
-		echo "clang --target=mips-linux-gnu";;
-	    powerpc-32*)
-		echo "clang --target=ppc32-linux-gnu";;
-	    powerpc-*)
-		echo "clang --target=ppc64-linux-gnu";;
-	    sparc*)
-		echo "clang --target=sparc-linux-gnu";;
 	    um*)
 		echo "clang";;
 	    *)
@@ -480,7 +483,7 @@ rebuild_scsi_drivers() {
 
 # Arguments: $1: architecture; $2: cross-compilation prefix.
 build_one_arch() {
-    echo "*** Architecture: $1 ***"
+    echo "*** Architecture: $1 ***" 1>&2
     [ -e .config ] || touch .config
     options=()
     case "$1" in
@@ -842,7 +845,10 @@ if [ $# -ge 1 ]; then
 else
     if [ -n "${use_clang}" ]; then
 	archs=(
-	    x86-32 x86-64 arm64 powerpc-32 powerpc-64 um
+	    x86-32 x86-64
+	    arm64 arm-multi arm-ep93xx arm-versatile arm-vexpress
+	    #mips-jazz mips-sgi mips-sni - makes Clang crash
+	    powerpc-32 powerpc-64 powerpc-ps3 s390 sparc um
 	)
     else
 	archs=(
