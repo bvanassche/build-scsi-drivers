@@ -826,7 +826,7 @@ build_one_arch() {
 set -eu
 
 use_clang=
-quiet=
+quiet=true
 while [ $# -ge 1 ] && [ "$1" != "${1#-}" ]; do
     case "$1" in
 	-c)
