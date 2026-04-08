@@ -410,6 +410,15 @@ rebuild_scsi_drivers() {
 	#CONFIG_STAGING=y
 	CONFIG_TARGET_CORE=y
     )
+    if [ -n "${block_drivers}" ]; then
+	options+=(
+	    CONFIG_BLK_DEV_DM=y
+	    CONFIG_BLK_DEV_NULL_BLK=y
+	    CONFIG_BLK_DEV_NVME=y
+	    CONFIG_MD=y
+	    CONFIG_NVME_TARGET=y
+	)
+    fi
     if git grep -q '^config BLK_INLINE_ENCRYPTION$' block; then
 	options+=(CONFIG_BLK_INLINE_ENCRYPTION=y)
     fi
@@ -825,10 +834,13 @@ build_one_arch() {
 
 set -eu
 
+block_drivers=
 use_clang=
 quiet=true
 while [ $# -ge 1 ] && [ "$1" != "${1#-}" ]; do
     case "$1" in
+	-b)
+	    block_drivers=true; shift;;
 	-c)
 	    use_clang=true; shift;;
 	-q)
