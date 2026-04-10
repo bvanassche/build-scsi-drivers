@@ -169,6 +169,7 @@ test_options() {
 }
 
 add_arm_ufs_drivers() {
+    [ -n "${block_drivers}" ] && return
     options+=(
 	CONFIG_ARCH_EXYNOS=y
 	CONFIG_ARCH_HISI=y
@@ -177,7 +178,10 @@ add_arm_ufs_drivers() {
 	CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
     )
     if ! git grep -q 'Qualcomm MSM (non-multiplatform)'; then
-	config+=(CONFIG_ARCH_QCOM=y CONFIG_SCSI_UFS_QCOM=y)
+	config+=(
+	    CONFIG_ARCH_QCOM=y
+	    CONFIG_SCSI_UFS_QCOM=y
+	)
     fi
     local ufs_host_drivers=(
 	SCSI_UFS_AMD_VERSAL2
@@ -201,93 +205,6 @@ add_arm_ufs_drivers() {
 rebuild_scsi_drivers() {
     local arch="$1" gcc_prefix MAKE_ARGS=()
 
-    # ATA, GDTH, Firewire, PCMCIA, USB and virtio drivers.
-    case "${arch%-*}" in
-	sh|um)
-	    ;;
-	m68k|s390)
-	    options+=(
-		CONFIG_ATA=y
-		CONFIG_COMPILE_TEST=y
-		CONFIG_FIREWIRE=y
-		CONFIG_FIREWIRE_SBP2=y
-		CONFIG_PARPORT=y
-		CONFIG_PCCARD=y
-		CONFIG_SCSI_LOWLEVEL_PCMCIA=y
-		CONFIG_USB=y
-		CONFIG_USB_MICROTEK=y
-		CONFIG_USB_STORAGE=y
-		CONFIG_USB_SUPPORT=y
-		CONFIG_USB_UAS=y
-	    );;
-	*)
-	    options+=(
-		CONFIG_ATA=y
-		CONFIG_COMPILE_TEST=y
-		CONFIG_FIREWIRE=y
-		CONFIG_FIREWIRE_SBP2=y
-		CONFIG_PARPORT=y
-		CONFIG_PCCARD=y
-		CONFIG_PCMCIA=y
-		CONFIG_PCMCIA_AHA152X=y
-		CONFIG_PCMCIA_QLOGIC=y
-		CONFIG_PCMCIA_SYM53C500=y
-		CONFIG_SCSI_LOWLEVEL_PCMCIA=y
-		CONFIG_USB=y
-		CONFIG_USB_MICROTEK=y
-		CONFIG_USB_STORAGE=y
-		CONFIG_USB_SUPPORT=y
-		CONFIG_USB_UAS=y
-	    )
-	    if git grep -q '^config PCMCIA_FDOMAIN$' drivers/scsi; then
-		options+=(CONFIG_PCMCIA_FDOMAIN=y)
-	    fi
-	    if git grep -q '^config SCSI_GDTH$' drivers/scsi; then
-		options+=(CONFIG_SCSI_GDTH=y)
-	    fi
-	    if git grep -q '^config VIRTIO_MENU' drivers/virtio; then
-		options+=(CONFIG_VIRTIO_MENU=y)
-	    fi
-	    ;;
-    esac
-
-    # I/O port PCI drivers and Fdomain driver.
-    case "${arch%-*}" in
-	arm|m68k|mips|parisc|s390|sh|um)
-	    ;;
-	*)
-	    options+=(
-		CONFIG_BLK_DEV_3W_XXXX_RAID=y
-		CONFIG_FUSION=y
-		CONFIG_FUSION_FC=y
-		CONFIG_FUSION_SAS=y
-		CONFIG_FUSION_SPI=y
-		CONFIG_MEGARAID_LEGACY=y
-		CONFIG_MEGARAID_MAILBOX=y
-		CONFIG_MEGARAID_MM=y
-		CONFIG_MEGARAID_NEWGEN=y
-		CONFIG_SCSI_ACARD=y
-		CONFIG_SCSI_ADVANSYS=y
-		CONFIG_SCSI_AIC79XX=y
-		CONFIG_SCSI_AIC7XXX=y
-		CONFIG_SCSI_AIC94XX=y
-		CONFIG_SCSI_DC395x=y
-		CONFIG_SCSI_DMX3191D=y
-		CONFIG_SCSI_INIA100=y
-		CONFIG_SCSI_INITIO=y
-		CONFIG_SCSI_IPS=y
-		CONFIG_SCSI_MVSAS=y
-		CONFIG_SCSI_QLA_FC=y
-	    )
-	    local c
-	    # shellcheck disable=SC2043
-	    for c in SCSI_FDOMAIN_PCI; do
-		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
-	    done
-	    ;;
-    esac
-
-    # PCI and InfiniBand drivers.
     case "${arch%-*}" in
 	arm|m68k|mips|parisc|sh|um)
 	    ;;
@@ -295,126 +212,242 @@ rebuild_scsi_drivers() {
 	    options+=(
 		CONFIG_DMADEVICES=y
 		CONFIG_PCI=y
-		CONFIG_SCSI_VIRTIO=y
 		CONFIG_SMP=y
-		CONFIG_VIRTIO=y
-		CONFIG_VIRTIO_PCI=y
 	    )
-	    options+=(
-		CONFIG_ATA_PIIX=y
-		CONFIG_BE2ISCSI=y
-		CONFIG_FCOE=y
-		CONFIG_MEGARAID_SAS=y
-		CONFIG_QED=y
-		CONFIG_QEDF=y
-		CONFIG_QEDI=y
-		CONFIG_SATA_AHCI=y
-		CONFIG_SATA_DWC=y
-		CONFIG_SATA_INIC162X=y
-		CONFIG_SATA_MV=y
-		CONFIG_SATA_NV=y
-		CONFIG_SATA_SIL24=y
-		CONFIG_SCSI_3W_9XXX=y
-		CONFIG_SCSI_3W_SAS=y
-		CONFIG_SCSI_AACRAID=y
-		CONFIG_SCSI_AM53C974=y
-		CONFIG_SCSI_ARCMSR=y
-		CONFIG_SCSI_BFA_FC=y
-		CONFIG_SCSI_BNX2X_FCOE=y
-		CONFIG_SCSI_BNX2_ISCSI=y
-		CONFIG_SCSI_CHELSIO_FCOE=y
-		CONFIG_SCSI_CXGB3_ISCSI=y
-		CONFIG_SCSI_CXGB4_ISCSI=y
-		CONFIG_SCSI_ESAS2R=y
-		CONFIG_SCSI_HPSA=y
-		CONFIG_SCSI_HPTIOP=y
-		CONFIG_SCSI_IPR=y
-		CONFIG_SCSI_MPT2SAS=y
-		CONFIG_SCSI_MPT3SAS=y
-		CONFIG_SCSI_MVUMI=y
-		CONFIG_SCSI_PM8001=y
-		CONFIG_SCSI_PM8001=y
-		CONFIG_SCSI_PMCRAID=y
-		CONFIG_SCSI_PMCRAID=y
-		CONFIG_SCSI_QLA_ISCSI=y
-		CONFIG_SCSI_QLOGIC_1280=y
-		CONFIG_SCSI_SNIC=y
-		CONFIG_SCSI_SNIC_DEBUG_FS=y
-		CONFIG_SCSI_STEX=y
-		CONFIG_SCSI_SYM53C8XX_2=y
-		CONFIG_SCSI_UFSHCD=y
-		CONFIG_SCSI_UFSHCD_PCI=y
-		CONFIG_SCSI_UFSHCD_PLATFORM=y
-		CONFIG_SCSI_UFS_DWC_TC_PCI=y
-		CONFIG_SCSI_WD719X=y
-	    )
-	    local c
-	    for c in SCSI_MPI3MR SCSI_MYRB SCSI_MYRS \
-			 SCSI_UFS_CRYPTO SCSI_UFS_FAULT_INJECTION SCSI_UFS_BSG \
-			 UFS_CDNS_PLATFORM SCSI_UFS_HPB; do
-		git grep -q "^config $c\$" drivers && options+=("CONFIG_${c}=y")
-	    done
-	    options+=(
-		CONFIG_INFINIBAND=y
-		CONFIG_INFINIBAND_ADDR_TRANS=y
-		CONFIG_INFINIBAND_ISER=y
-		CONFIG_INFINIBAND_SRP=y
-	    )
-	    ;;
+	    if [ -n "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_BLK_DEV_NVME=y
+		)
+	    fi
     esac
+
+    if [ -z "${block_drivers}" ]; then
+	# ATA, GDTH, Firewire, PCMCIA, USB and virtio drivers.
+	case "${arch%-*}" in
+	    sh|um)
+	        ;;
+	    m68k|s390)
+		options+=(
+		    CONFIG_ATA=y
+		    CONFIG_COMPILE_TEST=y
+		    CONFIG_FIREWIRE=y
+		    CONFIG_FIREWIRE_SBP2=y
+		    CONFIG_PARPORT=y
+		    CONFIG_PCCARD=y
+		    CONFIG_SCSI_LOWLEVEL_PCMCIA=y
+		    CONFIG_USB=y
+		    CONFIG_USB_MICROTEK=y
+		    CONFIG_USB_STORAGE=y
+		    CONFIG_USB_SUPPORT=y
+		    CONFIG_USB_UAS=y
+		);;
+	    *)
+		options+=(
+		    CONFIG_ATA=y
+		    CONFIG_COMPILE_TEST=y
+		    CONFIG_FIREWIRE=y
+		    CONFIG_FIREWIRE_SBP2=y
+		    CONFIG_PARPORT=y
+		    CONFIG_PCCARD=y
+		    CONFIG_PCMCIA=y
+		    CONFIG_PCMCIA_AHA152X=y
+		    CONFIG_PCMCIA_QLOGIC=y
+		    CONFIG_PCMCIA_SYM53C500=y
+		    CONFIG_SCSI_LOWLEVEL_PCMCIA=y
+		    CONFIG_USB=y
+		    CONFIG_USB_MICROTEK=y
+		    CONFIG_USB_STORAGE=y
+		    CONFIG_USB_SUPPORT=y
+		    CONFIG_USB_UAS=y
+		)
+		if git grep -q '^config PCMCIA_FDOMAIN$' drivers/scsi; then
+		    options+=(CONFIG_PCMCIA_FDOMAIN=y)
+		fi
+		if git grep -q '^config SCSI_GDTH$' drivers/scsi; then
+		    options+=(CONFIG_SCSI_GDTH=y)
+		fi
+		if git grep -q '^config VIRTIO_MENU' drivers/virtio; then
+		    options+=(CONFIG_VIRTIO_MENU=y)
+		fi
+		;;
+	esac
+
+	# I/O port PCI drivers and Fdomain driver.
+	case "${arch%-*}" in
+	    arm|m68k|mips|parisc|s390|sh|um)
+	        ;;
+	    *)
+		options+=(
+		    CONFIG_BLK_DEV_3W_XXXX_RAID=y
+		    CONFIG_FUSION=y
+		    CONFIG_FUSION_FC=y
+		    CONFIG_FUSION_SAS=y
+		    CONFIG_FUSION_SPI=y
+		    CONFIG_MEGARAID_LEGACY=y
+		    CONFIG_MEGARAID_MAILBOX=y
+		    CONFIG_MEGARAID_MM=y
+		    CONFIG_MEGARAID_NEWGEN=y
+		    CONFIG_SCSI_ACARD=y
+		    CONFIG_SCSI_ADVANSYS=y
+		    CONFIG_SCSI_AIC79XX=y
+		    CONFIG_SCSI_AIC7XXX=y
+		    CONFIG_SCSI_AIC94XX=y
+		    CONFIG_SCSI_DC395x=y
+		    CONFIG_SCSI_DMX3191D=y
+		    CONFIG_SCSI_INIA100=y
+		    CONFIG_SCSI_INITIO=y
+		    CONFIG_SCSI_IPS=y
+		    CONFIG_SCSI_MVSAS=y
+		    CONFIG_SCSI_QLA_FC=y
+		)
+		local c
+		# shellcheck disable=SC2043
+		for c in SCSI_FDOMAIN_PCI; do
+		    git grep -q "^config $c\$" drivers &&
+			options+=("CONFIG_${c}=y")
+		done
+		;;
+	esac
+
+	# PCI and InfiniBand drivers.
+	case "${arch%-*}" in
+	    arm|m68k|mips|parisc|sh|um)
+		;;
+	    *)
+		options+=(
+		    CONFIG_SCSI_VIRTIO=y
+		    CONFIG_VIRTIO=y
+		    CONFIG_VIRTIO_PCI=y
+		)
+		options+=(
+		    CONFIG_ATA_PIIX=y
+		    CONFIG_BE2ISCSI=y
+		    CONFIG_FCOE=y
+		    CONFIG_MEGARAID_SAS=y
+		    CONFIG_QED=y
+		    CONFIG_QEDF=y
+		    CONFIG_QEDI=y
+		    CONFIG_SATA_AHCI=y
+		    CONFIG_SATA_DWC=y
+		    CONFIG_SATA_INIC162X=y
+		    CONFIG_SATA_MV=y
+		    CONFIG_SATA_NV=y
+		    CONFIG_SATA_SIL24=y
+		    CONFIG_SCSI_3W_9XXX=y
+		    CONFIG_SCSI_3W_SAS=y
+		    CONFIG_SCSI_AACRAID=y
+		    CONFIG_SCSI_AM53C974=y
+		    CONFIG_SCSI_ARCMSR=y
+		    CONFIG_SCSI_BFA_FC=y
+		    CONFIG_SCSI_BNX2X_FCOE=y
+		    CONFIG_SCSI_BNX2_ISCSI=y
+		    CONFIG_SCSI_CHELSIO_FCOE=y
+		    CONFIG_SCSI_CXGB3_ISCSI=y
+		    CONFIG_SCSI_CXGB4_ISCSI=y
+		    CONFIG_SCSI_ESAS2R=y
+		    CONFIG_SCSI_HPSA=y
+		    CONFIG_SCSI_HPTIOP=y
+		    CONFIG_SCSI_IPR=y
+		    CONFIG_SCSI_MPT2SAS=y
+		    CONFIG_SCSI_MPT3SAS=y
+		    CONFIG_SCSI_MVUMI=y
+		    CONFIG_SCSI_PM8001=y
+		    CONFIG_SCSI_PM8001=y
+		    CONFIG_SCSI_PMCRAID=y
+		    CONFIG_SCSI_PMCRAID=y
+		    CONFIG_SCSI_QLA_ISCSI=y
+		    CONFIG_SCSI_QLOGIC_1280=y
+		    CONFIG_SCSI_SNIC=y
+		    CONFIG_SCSI_SNIC_DEBUG_FS=y
+		    CONFIG_SCSI_STEX=y
+		    CONFIG_SCSI_SYM53C8XX_2=y
+		    CONFIG_SCSI_UFSHCD=y
+		    CONFIG_SCSI_UFSHCD_PCI=y
+		    CONFIG_SCSI_UFSHCD_PLATFORM=y
+		    CONFIG_SCSI_UFS_DWC_TC_PCI=y
+		    CONFIG_SCSI_WD719X=y
+		)
+		local scsi_drivers=(
+		    SCSI_MPI3MR
+		    SCSI_MYRB
+		    SCSI_MYRS
+		    SCSI_UFS_BSG
+		    SCSI_UFS_CRYPTO
+		    SCSI_UFS_FAULT_INJECTION
+		    SCSI_UFS_HPB
+		    UFS_CDNS_PLATFORM
+		)
+		local c
+		for c in "${scsi_drivers[@]}"; do
+		    git grep -q "^config $c\$" drivers &&
+			options+=("CONFIG_${c}=y")
+		done
+		options+=(
+		    CONFIG_INFINIBAND=y
+		    CONFIG_INFINIBAND_ADDR_TRANS=y
+		    CONFIG_INFINIBAND_ISER=y
+		    CONFIG_INFINIBAND_SRP=y
+		)
+		;;
+	esac
+    fi
 
     [ "${arch%-*}" = x86 ] && options+=(CONFIG_BLK_DEV_ZONED=y)
 
     options+=(
-	CONFIG_BLK_DEV_BSG=y
-	CONFIG_BLK_DEV_SD=y
-	CONFIG_BLK_DEV_SR=y
 	CONFIG_BLOCK=y
-	CONFIG_CHR_DEV_SCH=y
-	CONFIG_CHR_DEV_SG=y
-	CONFIG_CHR_DEV_ST=y
 	CONFIG_DEBUG_FS=y
 	CONFIG_DEBUG_KERNEL=y
 	CONFIG_DEVFREQ_GOV_SIMPLE_ONDEMAND=y
-	CONFIG_ENCLOSURE_SERVICES=y
 	CONFIG_EXPERT=y
 	CONFIG_FAULT_INJECTION=y
 	CONFIG_INET=y
 	CONFIG_IPV6=y
-	CONFIG_ISCSI_TCP=y
-	CONFIG_LIBFC=y
-	CONFIG_LIBFCOE=y
-	CONFIG_LOOPBACK_TARGET=y
 	CONFIG_MODULES=y
 	CONFIG_NET=y
 	CONFIG_PM_DEVFREQ=y
-	CONFIG_RAID_ATTRS=y
 	CONFIG_RANDOMIZE_KSTACK_OFFSET=n
-	CONFIG_SCSI=y
-	CONFIG_SCSI_CONSTANTS=y
-	CONFIG_SCSI_DEBUG=y
-	CONFIG_SCSI_DH=y
-	CONFIG_SCSI_DH_ALUA=y
-	CONFIG_SCSI_ENCLOSURE=y
-	CONFIG_SCSI_FC_ATTRS=y
-	CONFIG_SCSI_ISCSI_ATTRS=y
-	CONFIG_SCSI_LOGGING=y
-	CONFIG_SCSI_SAS_ATTRS=y
-	CONFIG_SCSI_SAS_ATTRS=y
-	CONFIG_SCSI_SAS_LIBSAS=y
-	CONFIG_SCSI_SPI_ATTRS=y
-	CONFIG_SCSI_SRP_ATTRS=y
-	CONFIG_SCSI_SRP_ATTRS=y
-	CONFIG_SECURITY=n
-	CONFIG_SOUND=n
-	#CONFIG_STAGING=y
-	CONFIG_TARGET_CORE=y
     )
-    if [ -n "${block_drivers}" ]; then
+    if [ -z "${block_drivers}" ]; then
+	options+=(
+	    CONFIG_BLK_DEV_BSG=y
+	    CONFIG_BLK_DEV_SD=y
+	    CONFIG_BLK_DEV_SR=y
+	    CONFIG_CHR_DEV_SCH=y
+	    CONFIG_CHR_DEV_SG=y
+	    CONFIG_CHR_DEV_ST=y
+	    CONFIG_ENCLOSURE_SERVICES=y
+	    CONFIG_ISCSI_TCP=y
+	    CONFIG_LIBFC=y
+	    CONFIG_LIBFCOE=y
+	    CONFIG_LOOPBACK_TARGET=y
+	    CONFIG_RAID_ATTRS=y
+	)
+	options+=(
+	    CONFIG_SCSI=y
+	    CONFIG_SCSI_CONSTANTS=y
+	    CONFIG_SCSI_DEBUG=y
+	    CONFIG_SCSI_DH=y
+	    CONFIG_SCSI_DH_ALUA=y
+	    CONFIG_SCSI_ENCLOSURE=y
+	    CONFIG_SCSI_FC_ATTRS=y
+	    CONFIG_SCSI_ISCSI_ATTRS=y
+	    CONFIG_SCSI_LOGGING=y
+	    CONFIG_SCSI_SAS_ATTRS=y
+	    CONFIG_SCSI_SAS_ATTRS=y
+	    CONFIG_SCSI_SAS_LIBSAS=y
+	    CONFIG_SCSI_SPI_ATTRS=y
+	    CONFIG_SCSI_SRP_ATTRS=y
+	    CONFIG_SCSI_SRP_ATTRS=y
+	    CONFIG_SECURITY=n
+	    CONFIG_SOUND=n
+	    #CONFIG_STAGING=y
+	    CONFIG_TARGET_CORE=y
+	)
+    else
 	options+=(
 	    CONFIG_BLK_DEV_DM=y
 	    CONFIG_BLK_DEV_NULL_BLK=y
-	    CONFIG_BLK_DEV_NVME=y
 	    CONFIG_MD=y
 	    CONFIG_NVME_TARGET=y
 	)
@@ -499,66 +532,70 @@ build_one_arch() {
 	x86-32)
 	    options+=(
 		CONFIG_64BIT=n
-		CONFIG_ACPI=y
-		CONFIG_EISA=y
-		CONFIG_FCOE_FNIC=y
 		CONFIG_HIGHMEM4G=n
 		CONFIG_HIGHMEM64G=n
 		CONFIG_HIGHMEM=n
-		CONFIG_HYPERV=y
-		CONFIG_HYPERVISOR_GUEST=y
-		CONFIG_ISA=y
-		CONFIG_ISA_DMA_API=y
-		CONFIG_PARAVIRT=y
-		CONFIG_PCMCIA_NINJA_SCSI=y
-		CONFIG_SCSI_ISCI=y
-		CONFIG_SCSI_LPFC=y
-		CONFIG_VMWARE_PVSCSI=y
-		CONFIG_X86_EXTENDED_PLATFORM=y
-		CONFIG_X86_GENERIC=y
-		CONFIG_X86_PAE=y
-		CONFIG_XEN=y
 	    )
-	    if git grep -q '^config NOHIGHMEM$' arch/x86; then
-		options+=(CONFIG_NOHIGHMEM=y)
-	    fi
-	    # ISA drivers
-	    options+=(
-		CONFIG_SCSI_FDOMAIN_ISA=y
-		CONFIG_SCSI_AHA152X=y
-		CONFIG_SCSI_AHA1542=y
-		CONFIG_SCSI_GENERIC_NCR5380=y
-		CONFIG_SCSI_QLOGIC_FAS=y
-	    )
-	    # EISA drivers
-	    options+=(
-		CONFIG_SCSI_AHA1740=y
-		CONFIG_SCSI_SIM710=y
-	    )
-	    # Xen drivers
-	    options+=(
-		CONFIG_XEN_SCSI_FRONTEND=y
-	    )
-	    # Hyper-V drivers
-	    options+=(
-		CONFIG_HYPERV_STORAGE=y
-	    )
-	    # Parallel port drivers
-	    options+=(
-		CONFIG_PARPORT_PC=y
-		CONFIG_SCSI_IMM=y
-		CONFIG_SCSI_PPA=y
-	    )
-	    # 32-bit drivers
-	    options+=(
-		CONFIG_SCSI_BUSLOGIC=y
-		CONFIG_SCSI_FLASHPOINT=y
-		CONFIG_SCSI_NSP32=y
-	    )
-	    # See also commit b04e75a4a8a8 ("scsi: dpt_i2o: Remove obsolete
-	    # driver"; v5.19).
-	    if git grep -q 'config SCSI_DPT_I2O$' drivers/scsi; then
-		options+=(CONFIG_SCSI_DPT_I2O=y)
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_ACPI=y
+		    CONFIG_EISA=y
+		    CONFIG_FCOE_FNIC=y
+		    CONFIG_HYPERV=y
+		    CONFIG_HYPERVISOR_GUEST=y
+		    CONFIG_ISA=y
+		    CONFIG_ISA_DMA_API=y
+		    CONFIG_PARAVIRT=y
+		    CONFIG_PCMCIA_NINJA_SCSI=y
+		    CONFIG_SCSI_ISCI=y
+		    CONFIG_SCSI_LPFC=y
+		    CONFIG_VMWARE_PVSCSI=y
+		    CONFIG_X86_EXTENDED_PLATFORM=y
+		    CONFIG_X86_GENERIC=y
+		    CONFIG_X86_PAE=y
+		    CONFIG_XEN=y
+		)
+		if git grep -q '^config NOHIGHMEM$' arch/x86; then
+		    options+=(CONFIG_NOHIGHMEM=y)
+		fi
+		# ISA drivers
+		options+=(
+		    CONFIG_SCSI_FDOMAIN_ISA=y
+		    CONFIG_SCSI_AHA152X=y
+		    CONFIG_SCSI_AHA1542=y
+		    CONFIG_SCSI_GENERIC_NCR5380=y
+		    CONFIG_SCSI_QLOGIC_FAS=y
+		)
+		# EISA drivers
+		options+=(
+		    CONFIG_SCSI_AHA1740=y
+		    CONFIG_SCSI_SIM710=y
+		)
+		# Xen drivers
+		options+=(
+		    CONFIG_XEN_SCSI_FRONTEND=y
+		)
+		# Hyper-V drivers
+		options+=(
+		    CONFIG_HYPERV_STORAGE=y
+		)
+		# Parallel port drivers
+		options+=(
+		    CONFIG_PARPORT_PC=y
+		    CONFIG_SCSI_IMM=y
+		    CONFIG_SCSI_PPA=y
+		)
+		# 32-bit drivers
+		options+=(
+		    CONFIG_SCSI_BUSLOGIC=y
+		    CONFIG_SCSI_FLASHPOINT=y
+		    CONFIG_SCSI_NSP32=y
+		)
+		# See also commit b04e75a4a8a8 ("scsi: dpt_i2o: Remove obsolete
+		# driver"; v5.19).
+		if git grep -q 'config SCSI_DPT_I2O$' drivers/scsi; then
+		    options+=(CONFIG_SCSI_DPT_I2O=y)
+		fi
 	    fi
 	    ;;
 	x86-64)
@@ -566,13 +603,18 @@ build_one_arch() {
 		CONFIG_64BIT=y
 		CONFIG_PM=y
 		CONFIG_PM_SLEEP=y
-		CONFIG_SCSI_HISI_SAS=y
-		CONFIG_SCSI_HISI_SAS_PCI=y
-		CONFIG_SCSI_SMARTPQI=y
 	    )
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_SCSI_HISI_SAS=y
+		    CONFIG_SCSI_HISI_SAS_PCI=y
+		    CONFIG_SCSI_SMARTPQI=y
+		)
+	    fi
 	    # See also commit e5f45b011e4a ("staging: Remove the drivers for
 	    # the Unisys s-Par"; v5.19).
-	    if git grep -q 'config UNISYSSPAR$' drivers/scsi; then
+	    if [ -z "${block_drivers}" ] &&
+		   git grep -q 'config UNISYSSPAR$' drivers/scsi; then
 		options+=(
 		    CONFIG_UNISYSSPAR=y
 		    CONFIG_UNISYS_VISORBUS=y
@@ -618,12 +660,16 @@ build_one_arch() {
 		CONFIG_HIGHPTE=y
 		CONFIG_MMU=y
 		CONFIG_PCI=y
-		CONFIG_SCSI_UFSHCD=y
-		CONFIG_SCSI_UFSHCD_PCI=y
-		CONFIG_SCSI_UFSHCD_PLATFORM=y
 		CONFIG_SMP=y
 		CONFIG_WERROR=n
 	    )
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_SCSI_UFSHCD=y
+		    CONFIG_SCSI_UFSHCD_PCI=y
+		    CONFIG_SCSI_UFSHCD_PLATFORM=y
+		)
+	    fi
 	    if git grep -q '^config BLK_SUB_PAGE_SEGMENTS$' block; then
 		config+=(CONFIG_BLK_SUB_PAGE_SEGMENTS=y)
 	    fi
@@ -776,10 +822,14 @@ build_one_arch() {
 	    options+=(
 		CONFIG_PPC32=y
 		CONFIG_PPC_PMAC=y
-		CONFIG_PATA_MACIO=y
-		CONFIG_SCSI_MESH=y
-		CONFIG_SCSI_MAC53C94=y
 	    )
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_PATA_MACIO=y
+		    CONFIG_SCSI_MESH=y
+		    CONFIG_SCSI_MAC53C94=y
+		)
+	    fi
 	    ;;
 	powerpc-64)
 	    options+=(
@@ -788,11 +838,15 @@ build_one_arch() {
 		CONFIG_PPC64=y
 		CONFIG_PPC_BOOK3S=y
 		CONFIG_PPC_PSERIES=y
-		CONFIG_SCSI_IBMVFC=y
-		CONFIG_SCSI_IBMVSCSI=y
-		CONFIG_SCSI_IBMVSCSIS=y
 	    )
-	    if git grep -q '^config CXLFLASH'; then
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_SCSI_IBMVFC=y
+		    CONFIG_SCSI_IBMVSCSI=y
+		    CONFIG_SCSI_IBMVSCSIS=y
+		)
+	    fi
+	    if git grep -q '^config CXLFLASH' drivers/scsi; then
 		options+=(CONFIG_CXLFLASH=y)
 	    fi
 	    ;;
@@ -805,22 +859,38 @@ build_one_arch() {
 		CONFIG_PPC_BOOK3S_64=y
 		CONFIG_PPC_POWERNV=y
 		CONFIG_PPC_PS3=y
-		CONFIG_PS3_ROM=y
 		CONFIG_SPU_FS=y
 		CONFIG_VIRTUALIZATION=y
 	    )
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_PS3_ROM=y
+		)
+	    fi
 	    ;;
 	sparc)
 	    options+=(
-		CONFIG_SBUS=y
-		CONFIG_SCSI_QLOGICPTI=y
-		CONFIG_SCSI_SUNESP=y
+		CONFIG_64BIT=y
 	    )
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_SBUS=y
+		    CONFIG_SCSI_QLOGICPTI=y
+		    CONFIG_SCSI_SUNESP=y
+		)
+	    else
+		options+=(
+		    CONFIG_LDOMS
+		    CONFIG_SUNVDC
+		)
+	    fi
 	    ;;
 	s390)
-	    options+=(
-		CONFIG_ZFCP=y
-	    )
+	    if [ -z "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_ZFCP=y
+		)
+	    fi
 	    ;;
 	sh|um)
 	    ;;
