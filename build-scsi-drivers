@@ -70,10 +70,10 @@ compiler_name() {
     if [ -n "${use_clang}" ]; then
 	# See also scripts/Makefile.clang in the Linux kernel tree.
 	case "$1" in
-	    arm*)
-		echo "clang --target=arm-linux-gnueabi";;
 	    arm64*)
 		echo "clang --target=aarch64-linux-gnu -march=armv8-a";;
+	    arm*)
+		echo "clang --target=arm-linux-gnueabi";;
 	    mips*)
 		echo "clang --target=mipsel-linux-gnu";;
 	    powerpc-32*)
