@@ -177,7 +177,9 @@ add_arm_ufs_drivers() {
 	CONFIG_SCSI_UFS_DWC_TC_PCI=y
 	CONFIG_SCSI_UFS_DWC_TC_PLATFORM=y
     )
-    if ! git grep -q 'Qualcomm MSM (non-multiplatform)'; then
+    # See also commit c0c89fafa289 ("ARM: Remove mach-msm and associated ARM
+    # architecture code"; v4.1).
+    if ! git grep -q 'Qualcomm MSM (non-multiplatform)' arch/arm; then
 	config+=(
 	    CONFIG_ARCH_QCOM=y
 	    CONFIG_SCSI_UFS_QCOM=y
