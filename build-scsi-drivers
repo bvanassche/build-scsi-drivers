@@ -538,6 +538,9 @@ build_one_arch() {
 		CONFIG_HIGHMEM64G=n
 		CONFIG_HIGHMEM=n
 	    )
+	    if git grep -q '^config NOHIGHMEM$' arch/x86; then
+		options+=(CONFIG_NOHIGHMEM=y)
+	    fi
 	    if [ -z "${block_drivers}" ]; then
 		options+=(
 		    CONFIG_ACPI=y
@@ -557,9 +560,6 @@ build_one_arch() {
 		    CONFIG_X86_PAE=y
 		    CONFIG_XEN=y
 		)
-		if git grep -q '^config NOHIGHMEM$' arch/x86; then
-		    options+=(CONFIG_NOHIGHMEM=y)
-		fi
 		# ISA drivers
 		options+=(
 		    CONFIG_SCSI_FDOMAIN_ISA=y
