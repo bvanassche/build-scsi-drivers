@@ -448,11 +448,64 @@ rebuild_scsi_drivers() {
 	)
     else
 	options+=(
-	    CONFIG_BLK_DEV_DM=y
+	    CONFIG_ATA_OVER_ETH=y
+	    CONFIG_BLK_DEV_DRBD=y
+	    CONFIG_BLK_DEV_LOOP=y
+	    CONFIG_BLK_DEV_NBD=y
 	    CONFIG_BLK_DEV_NULL_BLK=y
-	    CONFIG_MD=y
-	    CONFIG_NVME_TARGET=y
+	    CONFIG_BLK_DEV_NULL_BLK=y
+	    CONFIG_BLK_DEV_RAM=y
+	    CONFIG_BLK_DEV_RBD=y
 	)
+	if [ "${arch}" != um ]; then
+	    options+=(
+		CONFIG_BLK_DEV_DM=y
+		CONFIG_BLK_DEV_RNBD_CLIENT=y
+		CONFIG_BLK_DEV_RNBD_SERVER=y
+		CONFIG_BLK_DEV_UBLK=y
+		CONFIG_INFINIBAND=y
+		CONFIG_INFINIBAND_ADDR_TRANS=y
+		CONFIG_INFINIBAND_RTRS_CLIENT=y
+		CONFIG_INFINIBAND_RTRS_SERVER=y
+		CONFIG_MD=y
+		CONFIG_NVME_TARGET=y
+	    )
+	fi
+	case "${arch}" in
+	    x86-64)
+		options+=(
+		    CONFIG_BLK_DEV_FD=y
+		    CONFIG_BLK_DEV_PCIESSD_MTIP32XX=y
+		    CONFIG_BLK_DEV_ZONED_LOOP=y
+		    CONFIG_HYPERVISOR_GUEST=y
+		    CONFIG_MMU=y
+		    CONFIG_PARAVIRT=y
+		    CONFIG_SYSFS=y
+		    CONFIG_VIRTIO_BLK=y
+		    CONFIG_VIRTIO_PCI=y
+		    CONFIG_XEN=y
+		    CONFIG_XEN_BLKDEV_BACKEND=y
+		    CONFIG_XEN_BLKDEV_FRONTEND=y
+		    CONFIG_ZRAM=y
+		    CONFIG_ZRAM_BACKEND_842=y
+		    CONFIG_ZRAM_BACKEND_DEFLATE=y
+		    CONFIG_ZRAM_BACKEND_LZ4=y
+		    CONFIG_ZRAM_BACKEND_LZ4HC=y
+		    CONFIG_ZRAM_BACKEND_LZO=y
+		    CONFIG_ZRAM_BACKEND_ZSTD=y
+		    CONFIG_ZRAM_MEMORY_TRACKING=y
+		    CONFIG_ZRAM_MULTI_COMP=y
+		    CONFIG_ZRAM_TRACK_ENTRY_ACTIME=y
+		    CONFIG_ZRAM_WRITEBACK=y
+		)
+		;;
+	    um*)
+		options+=(
+		    CONFIG_BLK_DEV_UBD=y
+		    CONFIG_BLK_DEV_UBD_SYNC=y
+		)
+		;;
+	esac
     fi
     if git grep -q '^config BLK_INLINE_ENCRYPTION$' block; then
 	options+=(CONFIG_BLK_INLINE_ENCRYPTION=y)
@@ -819,6 +872,12 @@ build_one_arch() {
 		CONFIG_I2C_POWERMAC=y
 		CONFIG_ADB_PMU=y
 	    )
+	    if [ -n "${block_drivers}" ]; then
+		options+=(
+		    CONFIG_MAC_FLOPPY=y
+		    CONFIG_BLK_DEV_SWIM=y
+		)
+	    fi
 	    ;;
 	powerpc-32)
 	    options+=(
