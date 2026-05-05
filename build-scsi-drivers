@@ -966,14 +966,17 @@ build_one_arch() {
 set -eu
 
 block_drivers=
-use_clang=
+keep_going=
 quiet=true
+use_clang=
 while [ $# -ge 1 ] && [ "$1" != "${1#-}" ]; do
     case "$1" in
 	-b)
 	    block_drivers=true; shift;;
 	-c)
 	    use_clang=true; shift;;
+	-k)
+	    keep_going=true; shift;;
 	-q)
 	    quiet=true; shift;;
 	*)
@@ -982,9 +985,7 @@ while [ $# -ge 1 ] && [ "$1" != "${1#-}" ]; do
 done
 
 if [ $# -ge 1 ]; then
-    for arch in "$@"; do
-	build_one_arch "${arch}"
-    done
+    archs=("$@")
 else
     if [ -n "${use_clang}" ]; then
 	archs=(
@@ -1002,7 +1003,9 @@ else
 	    parisc powerpc-32 powerpc-64 powerpc-ps3 s390 sh sparc um
 	)
     fi
-    for arch in "${archs[@]}"; do
-	build_one_arch "$arch"
-    done
 fi
+for arch in "${archs[@]}"; do
+    if ! build_one_arch "$arch" && [ -z "${keep_going}" ]; then
+	break;
+    fi
+done
