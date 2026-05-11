@@ -245,7 +245,22 @@ rebuild_scsi_drivers() {
 		);;
 	    *)
 		options+=(
+		    CONFIG_AHCI_BRCM=y
+		    CONFIG_AHCI_DA850=y
+		    CONFIG_AHCI_DM816=y
+		    CONFIG_AHCI_DWC=y
+		    CONFIG_AHCI_IMX=y
+		    CONFIG_AHCI_MTK=y
+		    CONFIG_AHCI_MVEBU=y
+		    CONFIG_AHCI_ST=y
+		    CONFIG_AHCI_SUNXI=y
+		    CONFIG_AHCI_TEGRA=y
+		    CONFIG_AHCI_XGENE=y
 		    CONFIG_ATA=y
+		    CONFIG_ATA_BMDMA=y
+		    CONFIG_ATA_FORCE=y
+		    CONFIG_ATA_SFF=y
+		    CONFIG_ATA_VERBOSE_ERROR=y
 		    CONFIG_COMPILE_TEST=y
 		    CONFIG_FIREWIRE=y
 		    CONFIG_FIREWIRE_SBP2=y
@@ -289,6 +304,32 @@ rebuild_scsi_drivers() {
 		    CONFIG_MEGARAID_MAILBOX=y
 		    CONFIG_MEGARAID_MM=y
 		    CONFIG_MEGARAID_NEWGEN=y
+		    CONFIG_PDC_ADMA=y
+		    CONFIG_SATA_ACARD_AHCI=y
+		    CONFIG_SATA_AHCI=y
+		    CONFIG_SATA_AHCI_PLATFORM=y
+		    CONFIG_SATA_AHCI_SEATTLE=y
+		    CONFIG_SATA_DWC=y
+		    CONFIG_SATA_DWC_OLD_DMA=y
+		    CONFIG_SATA_FSL=y
+		    CONFIG_SATA_GEMINI=y
+		    CONFIG_SATA_HIGHBANK=y
+		    CONFIG_SATA_HOST=y
+		    CONFIG_SATA_INIC162X=y
+		    CONFIG_SATA_MV=y
+		    CONFIG_SATA_NV=y
+		    CONFIG_SATA_PMP=y
+		    CONFIG_SATA_PROMISE=y
+		    CONFIG_SATA_QSTOR=y
+		    CONFIG_SATA_RCAR=y
+		    CONFIG_SATA_SIL24=y
+		    CONFIG_SATA_SIL=y
+		    CONFIG_SATA_SIS=y
+		    CONFIG_SATA_SVW=y
+		    CONFIG_SATA_SX4=y
+		    CONFIG_SATA_ULI=y
+		    CONFIG_SATA_VIA=y
+		    CONFIG_SATA_VITESSE=y
 		    CONFIG_SCSI_ACARD=y
 		    CONFIG_SCSI_ADVANSYS=y
 		    CONFIG_SCSI_AIC79XX=y
@@ -322,6 +363,7 @@ rebuild_scsi_drivers() {
 		    CONFIG_VIRTIO_PCI=y
 		)
 		options+=(
+		    CONFIG_ATA_GENERIC=y
 		    CONFIG_ATA_PIIX=y
 		    CONFIG_BE2ISCSI=y
 		    CONFIG_FCOE=y
@@ -602,6 +644,7 @@ build_one_arch() {
 	    if [ -z "${block_drivers}" ]; then
 		options+=(
 		    CONFIG_ACPI=y
+		    CONFIG_ATA_ACPI=y
 		    CONFIG_EISA=y
 		    CONFIG_FCOE_FNIC=y
 		    CONFIG_HYPERV=y
@@ -642,6 +685,60 @@ build_one_arch() {
 		# Parallel port drivers
 		options+=(
 		    CONFIG_PARPORT_PC=y
+		    CONFIG_PATA_ACPI=y
+		    CONFIG_PATA_ALI=y
+		    CONFIG_PATA_AMD=y
+		    CONFIG_PATA_ARASAN_CF=y
+		    CONFIG_PATA_ARTOP=y
+		    CONFIG_PATA_ATIIXP=y
+		    CONFIG_PATA_ATP867X=y
+		    CONFIG_PATA_CMD640_PCI=y
+		    CONFIG_PATA_CMD64X=y
+		    CONFIG_PATA_CS5520=y
+		    CONFIG_PATA_CS5530=y
+		    CONFIG_PATA_CS5535=y
+		    CONFIG_PATA_CS5536=y
+		    CONFIG_PATA_CYPRESS=y
+		    CONFIG_PATA_EFAR=y
+		    CONFIG_PATA_FTIDE010=y
+		    CONFIG_PATA_HPT366=y
+		    CONFIG_PATA_HPT37X=y
+		    CONFIG_PATA_HPT3X2N=y
+		    CONFIG_PATA_HPT3X3=y
+		    CONFIG_PATA_HPT3X3_DMA=y
+		    CONFIG_PATA_IMX=y
+		    CONFIG_PATA_IT8213=y
+		    CONFIG_PATA_IT821X=y
+		    CONFIG_PATA_IXP4XX_CF=y
+		    CONFIG_PATA_JMICRON=y
+		    CONFIG_PATA_LEGACY=y
+		    CONFIG_PATA_MARVELL=y
+		    CONFIG_PATA_MPIIX=y
+		    CONFIG_PATA_NETCELL=y
+		    CONFIG_PATA_NINJA32=y
+		    CONFIG_PATA_NS87410=y
+		    CONFIG_PATA_NS87415=y
+		    CONFIG_PATA_OLDPIIX=y
+		    CONFIG_PATA_OPTI=y
+		    CONFIG_PATA_OPTIDMA=y
+		    CONFIG_PATA_PARPORT=y
+		    CONFIG_PATA_PCMCIA=y
+		    CONFIG_PATA_PDC2027X=y
+		    CONFIG_PATA_PDC_OLD=y
+		    CONFIG_PATA_PXA=y
+		    CONFIG_PATA_RADISYS=y
+		    CONFIG_PATA_RDC=y
+		    CONFIG_PATA_RZ1000=y
+		    CONFIG_PATA_SC1200=y
+		    CONFIG_PATA_SCH=y
+		    CONFIG_PATA_SERVERWORKS=y
+		    CONFIG_PATA_SIL680=y
+		    CONFIG_PATA_SIS=y
+		    CONFIG_PATA_TIMINGS=y
+		    CONFIG_PATA_TOSHIBA=y
+		    CONFIG_PATA_TRIFLEX=y
+		    CONFIG_PATA_VIA=y
+		    CONFIG_PATA_WINBOND=y
 		    CONFIG_SCSI_IMM=y
 		    CONFIG_SCSI_PPA=y
 		)
@@ -650,6 +747,10 @@ build_one_arch() {
 		    CONFIG_SCSI_BUSLOGIC=y
 		    CONFIG_SCSI_FLASHPOINT=y
 		    CONFIG_SCSI_NSP32=y
+		)
+		# ACPI drivers
+		options+=(
+		    CONFIG_SATA_ZPODD=y
 		)
 		# See also commit b04e75a4a8a8 ("scsi: dpt_i2o: Remove obsolete
 		# driver"; v5.19).
@@ -669,6 +770,12 @@ build_one_arch() {
 		    CONFIG_SCSI_HISI_SAS=y
 		    CONFIG_SCSI_HISI_SAS_PCI=y
 		    CONFIG_SCSI_SMARTPQI=y
+		)
+		# Parallel port drivers
+		options+=(
+		    CONFIG_PARPORT_PC=y
+		    CONFIG_SCSI_IMM=y
+		    CONFIG_SCSI_PPA=y
 		)
 	    fi
 	    # See also commit e5f45b011e4a ("staging: Remove the drivers for
