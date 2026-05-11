@@ -476,7 +476,6 @@ rebuild_scsi_drivers() {
 		options+=(
 		    CONFIG_BLK_DEV_FD=y
 		    CONFIG_BLK_DEV_PCIESSD_MTIP32XX=y
-		    CONFIG_BLK_DEV_ZONED_LOOP=y
 		    CONFIG_HYPERVISOR_GUEST=y
 		    CONFIG_MMU=y
 		    CONFIG_PARAVIRT=y
@@ -498,6 +497,12 @@ rebuild_scsi_drivers() {
 		    CONFIG_ZRAM_TRACK_ENTRY_ACTIME=y
 		    CONFIG_ZRAM_WRITEBACK=y
 		)
+		if git grep -q '^config BLK_DEV_ZONED_LOOP' \
+		       drivers/block/Kconfig; then
+		    options+=(
+			CONFIG_BLK_DEV_ZONED_LOOP=y
+		    )
+		fi
 		;;
 	    um*)
 		options+=(
