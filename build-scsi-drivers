@@ -579,13 +579,7 @@ rebuild_scsi_drivers() {
 	gcc_prefix=""
 	CC="${gcc_prefix}$(compiler_name "$arch")"
 	MAKE_ARGS+=(LLVM=1)
-	export LD=ld.lld
-	export AR=llvm-ar
-	export NM=llvm-nm
-	export OBJCOPY=llvm-objcopy
-	export OBJDUMP=llvm-objdump
-	export STRIP=llvm-strip
-	export READELF=llvm-readelf
+	export KCFLAGS="-fmessage-length=0 -fno-color-diagnostics"
     else
 	gcc_prefix=$(gcc_prefix "${arch%-*}")
 	CC="${gcc_prefix}$(compiler_name "$arch")"
