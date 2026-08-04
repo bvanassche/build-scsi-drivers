@@ -1,0 +1,52 @@
+#!/bin/bash
+
+scriptdir=$(cd "$(dirname "$0")" && pwd)
+
+# Check if script is executed from the top of the Linux kernel tree
+if [[ ! -f "Kbuild" && ! -f "MAINTAINERS" && ! -d "drivers" ]]; then
+    echo "Error: Please run this script from the root of the Linux kernel tree." >&2
+    exit 1
+fi
+
+declare -A kconfig_symbols
+
+# 1. Find all .c files containing 'include <scsi/scsi_cmnd.h>'
+while IFS= read -r c_file; do
+    dir=$(dirname "$c_file")
+    base=$(basename "$c_file" .c)
+    makefile="$dir/Makefile"
+
+    if [[ ! -f "$makefile" ]]; then
+        continue
+    fi
+
+    # 2. Extract CONFIG_ symbols associated with the file or directory in the Makefile
+    # Search for patterns like obj-$(CONFIG_FOO) += file.o or obj-$(CONFIG_BAR) += dir/
+    symbols=$(grep -E 'obj-\$\(CONFIG_[A-Za-z0-9_]+\)' "$makefile" | \
+              grep -E "($base\.o|$dir/)" | \
+              sed -n 's/.*obj-\$(CONFIG_\([A-Za-z0-9_]*\)).*/\1/p')
+
+    for sym in $symbols; do
+        if [[ -n "$sym" ]]; then
+            kconfig_symbols["CONFIG_$sym"]=1
+        fi
+    done
+
+done < <(git grep -l "include <scsi/scsi_cmnd.h>" "**.c")
+
+# 3. Process unique Kconfig symbols found
+for sym in "${!kconfig_symbols[@]}"; do
+    echo "$sym"
+done |
+    sort |
+    while read -r sym; do
+	grep -Eqw "${sym}=y|${sym#CONFIG_}" "${scriptdir}/build-scsi-drivers" &&
+	    continue
+	case "${sym}" in
+	    CONFIG_BLK_DEV_BSGLIB|CONFIG_REMOTE_TARGET|CONFIG_SCSI_FDOMAIN)
+		continue;;
+	    CONFIG_SENSORS_DRIVETEMP)
+		continue;;
+	esac
+	echo "${sym}"
+    done
