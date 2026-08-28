@@ -421,6 +421,7 @@ rebuild_scsi_drivers() {
 		    CONFIG_SCSI_WD719X=y
 		)
 		local scsi_drivers=(
+		    SCSI_LEAPRAID
 		    SCSI_MPI3MR
 		    SCSI_MYRB
 		    SCSI_MYRS
