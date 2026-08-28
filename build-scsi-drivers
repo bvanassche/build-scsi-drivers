@@ -1114,12 +1114,34 @@ if [ $# -ge 1 ]; then
     archs=("$@")
 else
     if [ -n "${use_clang}" ]; then
-	archs=(
-	    x86-32 x86-64
-	    arm64 arm-multi arm-ep93xx arm-versatile arm-vexpress
-	    #mips-jazz mips-sgi mips-sni - makes Clang crash
-	    powerpc-32 powerpc-64 powerpc-ps3 s390 sparc um
-	)
+	readarray -t targets < <(clang -print-targets |
+		      sed -n 's/^    //p' |
+		      sed 's/[[:blank:]]* - .*//')
+	for target in "${targets[@]}"; do
+	    case "$target" in
+		x86)
+		    archs+=(x86-32);;
+		x86-64)
+		    archs+=(x86-64);;
+		aarch64)
+		    archs+=(arm64);;
+		arm)
+		    archs+=(arm-multi arm-ep93xx arm-versatile arm-vexpress)
+		    ;;
+		mips)
+		    archs+=(mips-jazz mips-sgi mips-sni);;
+		ppc32)
+		    archs+=(powerpc-32);;
+		ppc64)
+		    archs+=(powerpc-64 powerpc-ps3);;
+		systemz)
+		    archs+=(s390);;
+		sparc)
+		    archs+=(sparc);;
+	    esac
+	done
+	archs+=(um)
+	echo "archs = ${archs[*]}"
     else
 	archs=(
 	    x86-32 x86-64 arm64 arm64_gcc_9 arm-rpc arm-multi
