@@ -1156,8 +1156,9 @@ else
 	)
     fi
 fi
+if [ -n "${keep_going}" ]; then
+    set +e
+fi
 for arch in "${archs[@]}"; do
-    if ! build_one_arch "$arch" && [ -z "${keep_going}" ]; then
-	break;
-    fi
+    build_one_arch "$arch"
 done
